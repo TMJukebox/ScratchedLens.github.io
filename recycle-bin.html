@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recycle Bin — Aden</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
 <div class="page-wrap">
-  <div class="window content-window" style="max-width:560px;">
+  <div class="window content-window" data-width="460" data-height="300">
     <div class="title-bar tb-navy">
       <div class="title-bar-text">RECYCLE BIN</div>
       <div class="title-bar-controls">
@@ -32,7 +32,7 @@
 </div>
 
 <!-- Snake app window — launched from the icon above, hidden until then. -->
-<div class="window app-window" id="snake-window" hidden>
+<div class="window app-window" id="snake-window" data-width="424" data-height="452" hidden>
   <div class="title-bar tb-green">
     <div class="title-bar-text">SNAKE.EXE</div>
     <div class="title-bar-controls">
@@ -69,7 +69,7 @@
   </div>
 </div>
 
-<script src="js/script.js"></script>
+<script src="js/script.js?v=2"></script>
 <script>
   // Launch the Snake app window when its bin icon is clicked.
   (function () {
@@ -91,10 +91,7 @@
       win.classList.remove("is-minimized");
 
       if (!ready && typeof window.setupWindow === "function") {
-        window.setupWindow(win);
-        // Snug fit around the 400x400 game board.
-        win.style.width = "432px";
-        win.style.height = "462px";
+        window.setupWindow(win); // honours data-width / data-height
         ready = true;
       }
       if (typeof window.bringToFront === "function") {

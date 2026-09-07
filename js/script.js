@@ -76,13 +76,19 @@ function setupWindow(win) {
   win.style.maxWidth = "none";
   win.style.maxHeight = "none";
 
-  // Width first (drives text wrapping), then measure the content for the height.
-  const w = clamp(600, 300, Math.min(vw - iconCol - 24, 760));
+  // A window can pin its own size with data-width / data-height; otherwise use a
+  // sensible default width and measure the content for the height.
+  const presetW = parseFloat(win.dataset.width);
+  const presetH = parseFloat(win.dataset.height);
+
+  const w = clamp(presetW || 600, 280, Math.min(vw - iconCol - 24, 900));
   win.style.width = w + "px";
   win.style.height = "auto";
   void win.offsetHeight; // force reflow so the measurement below is real
-  const natural = titleBar.offsetHeight + (win.querySelector(".window-body").scrollHeight || 0) + 12;
-  const h = clamp(natural, 180, maxH);
+  const natural =
+    presetH ||
+    titleBar.offsetHeight + (win.querySelector(".window-body").scrollHeight || 0) + 12;
+  const h = clamp(natural, 150, maxH);
 
   const avail = vw - iconCol - 24 - w;
   const left = iconCol + (avail > 0 ? avail / 2 : 8);
