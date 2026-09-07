@@ -1,0 +1,332 @@
+/* ============================================================
+   queer punk win95 portfolio — custom layer on top of 98.css
+   ============================================================ */
+
+:root {
+  --win-gray: #c0c0c0;
+  --win-navy: #000080;
+  --win-teal: #008080;
+  --hot-pink: #ff2d95;
+  --electric-blue: #00baff;
+  --acid-green: #39ff14;
+  --zine-yellow: #fff200;
+  --safety-orange: #ff5e00;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif;
+  background-color: var(--win-teal);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- layout shell ---------- */
+
+.desktop {
+  position: relative;
+  flex: 1;
+  padding: 24px;
+  padding-bottom: 64px; /* room for taskbar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* icons pinned to the top-left, like a fresh Windows desktop */
+.desktop-icons {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  max-height: calc(100vh - 110px); /* wrap into a new column before the taskbar */
+  gap: 22px 12px;
+}
+
+.page-wrap {
+  flex: 1;
+  padding: 24px;
+  padding-bottom: 64px;
+  /* clear the desktop icon column pinned at the left */
+  padding-left: 148px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.content-window {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ---------- desktop icons (home page) ---------- */
+
+.desktop-icon {
+  width: 96px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  text-decoration: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.desktop-icon .icon-glyph {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 6px;
+  display: block;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  /* keep the pixels crunchy, like a real 9x desktop */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+.desktop-icon:focus .icon-glyph,
+.desktop-icon:hover .icon-glyph {
+  filter: brightness(1.1) drop-shadow(0 0 2px rgba(255,255,255,0.6));
+}
+
+/* the computer icon reads a touch small next to the others — nudge it up */
+.icon-web .icon-glyph {
+  width: 78px;
+  height: 78px;
+  margin-top: -30px;
+}
+
+.desktop-icon span.label {
+  display: inline-block;
+  padding: 1px 3px;
+}
+
+.desktop-icon:hover span.label,
+.desktop-icon:focus span.label {
+  background: var(--win-navy);
+  outline: 1px dotted #fff;
+}
+
+/* ---------- title bar color variants ---------- */
+
+.title-bar.tb-pink   { background: linear-gradient(90deg, var(--hot-pink), #7a0040); }
+.title-bar.tb-blue   { background: linear-gradient(90deg, var(--electric-blue), #003a66); }
+.title-bar.tb-purple { background: linear-gradient(90deg, #a300ff, #2e0057); }
+.title-bar.tb-green  { background: linear-gradient(90deg, var(--acid-green), #0a4d02); }
+.title-bar.tb-navy   { background: linear-gradient(90deg, #1084d0, var(--win-navy)); }
+
+/* ---------- sticker / zine accents ---------- */
+
+.sticker {
+  display: inline-block;
+  transform: rotate(-4deg);
+  background: var(--zine-yellow);
+  border: 2px solid #000;
+  padding: 2px 10px;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 2px 2px 0 #000;
+  margin: 0 4px 4px 0;
+}
+.sticker.pink   { background: var(--hot-pink); color: #fff; transform: rotate(3deg); }
+.sticker.blue   { background: var(--electric-blue); transform: rotate(-2deg); }
+.sticker.green  { background: var(--acid-green); transform: rotate(2deg); }
+
+hr.tape {
+  border: none;
+  height: 10px;
+  background: repeating-linear-gradient(45deg, var(--zine-yellow), var(--zine-yellow) 8px, #000 8px, #000 10px);
+  opacity: 0.85;
+  margin: 18px 0;
+}
+
+/* ---------- gallery grid ---------- */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 8px;
+}
+
+.gallery-item {
+  background: #dfdfdf;
+  border: 2px inset #fff;
+  padding: 6px;
+  text-align: center;
+}
+
+.gallery-item .thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: repeating-linear-gradient(135deg, #999, #999 10px, #888 10px, #888 20px);
+  border: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eee;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.gallery-item .cap {
+  font-size: 12px;
+}
+
+.gallery-item .cap .venue {
+  display: block;
+  font-size: 11px;
+  color: #444;
+}
+
+/* ---------- case study cards (web design) ---------- */
+
+.case-study {
+  background: #dfdfdf;
+  border: 2px groove #fff;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.case-study .shot {
+  width: 100%;
+  height: 160px;
+  background: repeating-linear-gradient(135deg, var(--electric-blue), var(--electric-blue) 10px, #007bb3 10px, #007bb3 20px);
+  border: 1px solid #000;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+}
+
+.case-study .tech-tags span {
+  display: inline-block;
+  background: var(--win-navy);
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 6px;
+  margin: 2px 4px 2px 0;
+}
+
+/* ---------- taskbar ---------- */
+
+.taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40px;
+  background: var(--win-gray);
+  border-top: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  padding: 3px 6px;
+  z-index: 100;
+  gap: 6px;
+}
+
+.start-button {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+}
+
+.taskbar-sep {
+  width: 2px;
+  height: 28px;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+}
+
+.taskbar-links {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.taskbar-links a.btn-task {
+  text-decoration: none;
+  color: #000;
+  font-size: 12px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+.taskbar-links a.btn-task.active {
+  border-style: inset;
+}
+
+.tray-clock {
+  border: 1px inset #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  min-width: 64px;
+  text-align: center;
+  background: var(--win-gray);
+}
+
+/* ---------- misc content ---------- */
+
+.window-body h1 { font-size: 18px; margin-top: 0; }
+.window-body h2 { font-size: 15px; }
+.marquee-bar {
+  background: #000;
+  color: var(--acid-green);
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  border: 1px inset #fff;
+  margin-bottom: 10px;
+}
+.marquee-bar span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 18s linear infinite;
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+footer.sitefoot {
+  font-size: 11px;
+  text-align: center;
+  padding: 6px;
+  color: #eee;
+}
+
+@media (max-width: 600px) {
+  .desktop { display: block; padding: 14px; padding-bottom: 64px; }
+  .desktop-icons {
+    position: static;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .desktop-icon { width: 74px; }
+  /* icons stack above the content on narrow screens, so no left gutter needed */
+  .page-wrap { padding-left: 14px; padding-right: 14px; }
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — Aden</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="window content-window" style="max-width:520px;">
+    <div class="title-bar tb-green">
+      <div class="title-bar-text">CONTACT — Outlook Express</div>
+      <div class="title-bar-controls">
+        <button aria-label="Minimize"></button>
+        <button aria-label="Maximize"></button>
+        <button aria-label="Close"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <h1>get in touch</h1>
+      <p>booking a shoot, need a site built, or just want to say hi:</p>
+
+      <div class="field-row-stacked" style="margin-bottom:10px;">
+        <label for="email">email</label>
+        <input id="email" type="text" readonly value="adenmrojas@gmail.com">
+      </div>
+
+      <p>
+        <span class="sticker pink">Instagram @yourhandle</span>
+        <span class="sticker blue">Bandcamp / portfolio link</span>
+      </p>
+
+      <hr class="tape">
+
+      <!-- Simple mailto form. Swap for a form service (Formspree, etc)
+           if you want submissions without opening the visitor's email app. -->
+      <form action="mailto:adenmrojas@gmail.com" method="post" enctype="text/plain">
+        <div class="field-row-stacked">
+          <label for="name">name</label>
+          <input id="name" name="name" type="text">
+        </div>
+        <div class="field-row-stacked">
+          <label for="reason">what do you need?</label>
+          <select id="reason" name="reason">
+            <option>Photo / video booking</option>
+            <option>Website project</option>
+            <option>Just saying hi</option>
+          </select>
+        </div>
+        <div class="field-row-stacked">
+          <label for="message">message</label>
+          <textarea id="message" name="message" rows="5"></textarea>
+        </div>
+        <button type="submit">send message</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="taskbar">
+  <button id="start-button" class="start-button">
+    <span style="font-size:14px;">🪟</span> Start
+  </button>
+  <div class="taskbar-sep"></div>
+  <div class="taskbar-links">
+    <a class="btn-task active" href="contact.html">✉️ Contact.exe</a>
+  </div>
+  <div id="tray-clock" class="tray-clock">--:-- --</div>
+</div>
+
+<div id="start-menu" class="window" style="display:none; position:fixed; bottom:44px; left:4px; width:220px; z-index:200;">
+  <div class="window-body" style="padding:6px;">
+    <ul style="list-style:none; margin:0; padding:0;">
+      <li><a href="index.html">🏠 Home</a></li>
+      <li><a href="photo-video.html">📷 Photo &amp; Video</a></li>
+      <li><a href="web-design.html">🖥️ Website Work</a></li>
+      <li><a href="about.html">📼 About Me</a></li>
+      <li><a href="contact.html">✉️ Contact</a></li>
+    </ul>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
