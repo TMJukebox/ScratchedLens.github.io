@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden; /* a window dragged past the edge shouldn't scroll the desktop */
 }
 
 /* ---------- layout shell ---------- */
@@ -70,6 +71,64 @@ body {
 .content-window {
   width: 100%;
   max-width: 900px;
+}
+
+/* ---------- movable / resizable windows ---------- */
+
+.win-managed {
+  position: fixed;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 280px;
+  min-height: 150px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+.win-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  touch-action: none;
+  z-index: 3;
+  background:
+    linear-gradient(135deg, transparent 0 6px, #808080 6px 8px, transparent 8px 9px,
+      #808080 9px 11px, transparent 11px 12px, #808080 12px 14px, transparent 14px);
+}
+
+.win-managed .title-bar {
+  flex: 0 0 auto;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.win-managed .title-bar-controls button {
+  cursor: default;
+}
+
+.win-managed .window-body {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.win-managed.is-maximized {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - 40px) !important;
+}
+
+.win-managed.is-maximized .win-resize {
+  display: none;
+}
+
+.win-managed.is-minimized {
+  display: none !important;
 }
 
 /* ---------- desktop icons (home page) ---------- */
