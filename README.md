@@ -1,5 +1,4 @@
-# Portfolio site — setup notes
-
+# Portfolio site
 Plain HTML/CSS, no build step. Uses [98.css](https://jdan.github.io/98.css/) via CDN for the Windows 95 UI chrome, plus a custom `css/style.css` 
 
 ## Files
