@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recycle Bin — Aden</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="window content-window" style="max-width:560px;">
+    <div class="title-bar tb-navy">
+      <div class="title-bar-text">RECYCLE BIN</div>
+      <div class="title-bar-controls">
+        <button aria-label="Minimize"></button>
+        <button aria-label="Maximize"></button>
+        <button aria-label="Close"></button>
+      </div>
+    </div>
+    <div class="window-body">
+      <p class="bin-status">Recycle Bin &mdash; 1 item</p>
+      <div class="bin-grid">
+        <a class="desktop-icon bin-icon" id="open-snake" href="snake.html" role="button">
+          <span class="icon-glyph glyph-emoji">🐍</span>
+          <span class="label">Snake</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Snake app window — launched from the icon above, hidden until then. -->
+<div class="window app-window" id="snake-window" hidden>
+  <div class="title-bar tb-green">
+    <div class="title-bar-text">SNAKE.EXE</div>
+    <div class="title-bar-controls">
+      <button aria-label="Minimize"></button>
+      <button aria-label="Maximize"></button>
+      <button aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="window-body snake-body">
+    <iframe class="snake-frame" title="Snake game" src="about:blank" data-src="snake.html"></iframe>
+  </div>
+</div>
+
+<div class="taskbar">
+  <button id="start-button" class="start-button">
+    <span style="font-size:14px;">🪟</span> Start
+  </button>
+  <div class="taskbar-sep"></div>
+  <div class="taskbar-links">
+    <a class="btn-task active" href="recycle-bin.html">🗑️ Recycle_Bin.exe</a>
+  </div>
+  <div id="tray-clock" class="tray-clock">--:-- --</div>
+</div>
+
+<div id="start-menu" class="window" style="display:none; position:fixed; bottom:44px; left:4px; width:220px; z-index:200;">
+  <div class="window-body" style="padding:6px;">
+    <ul style="list-style:none; margin:0; padding:0;">
+      <li><a href="index.html">🏠 Home</a></li>
+      <li><a href="photo-video.html">📷 Photo &amp; Video</a></li>
+      <li><a href="web-design.html">🖥️ Website Work</a></li>
+      <li><a href="about.html">📼 About Me</a></li>
+      <li><a href="contact.html">✉️ Contact</a></li>
+    </ul>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+<script>
+  // Launch the Snake app window when its bin icon is clicked.
+  (function () {
+    var icon = document.getElementById("open-snake");
+    var win = document.getElementById("snake-window");
+    if (!icon || !win) return;
+    var frame = win.querySelector(".snake-frame");
+    var ready = false;
+
+    icon.addEventListener("click", function (e) {
+      e.preventDefault();
+
+      // Fresh game when opening from closed; resume when restoring from minimized.
+      if (win.hidden) {
+        frame.src = frame.dataset.src;
+      }
+
+      win.hidden = false;
+      win.classList.remove("is-minimized");
+
+      if (!ready && typeof window.setupWindow === "function") {
+        window.setupWindow(win);
+        // Snug fit around the 400x400 game board.
+        win.style.width = "432px";
+        win.style.height = "462px";
+        ready = true;
+      }
+      if (typeof window.bringToFront === "function") {
+        window.bringToFront(win);
+      }
+
+      // Focus the frame so the arrow keys drive the snake straight away.
+      try { frame.contentWindow.focus(); } catch (err) {}
+    });
+  })();
+</script>
+</body>
+</html>

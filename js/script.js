@@ -38,7 +38,7 @@ const DESKTOP_ICONS_HTML = `
       <span class="label">Get In<br>Touch</span>
     </a>
 
-    <a class="desktop-icon icon-recycle" href="#" title="nothing to see here" onclick="return false;">
+    <a class="desktop-icon icon-recycle" href="recycle-bin.html" title="Recycle Bin">
       <img class="icon-glyph" src="img/recycle95.png" alt="" width="48" height="48">
       <span class="label">Recycle<br>Bin</span>
     </a>
@@ -213,13 +213,17 @@ function setupWindow(win) {
     toggleMax();
   });
 
+  // A secondary window (an app launched from inside a page) just hides on close
+  // and isn't tied to the page's taskbar button.
+  const isApp = win.classList.contains("app-window");
+
   // ---- minimize / restore from the taskbar ----
   const minBtn = controls && controls.querySelector('button[aria-label="Minimize"]');
   const taskBtn = document.querySelector(".taskbar-links .btn-task.active");
   if (minBtn) {
     minBtn.addEventListener("click", () => win.classList.add("is-minimized"));
   }
-  if (taskBtn) {
+  if (taskBtn && !isApp) {
     taskBtn.addEventListener("click", (e) => {
       if (win.classList.contains("is-minimized")) {
         e.preventDefault();
@@ -229,12 +233,18 @@ function setupWindow(win) {
     });
   }
 
-  // ---- close: sub-pages go back to the desktop; home just tidies up ----
+  // ---- close ----
   const closeBtn = controls && controls.querySelector('button[aria-label="Close"]');
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      if (!ON_HOME) window.location.href = "index.html";
-      else win.classList.add("is-minimized");
+      if (isApp) {
+        win.hidden = true;
+        win.classList.remove("is-minimized", "is-maximized");
+      } else if (!ON_HOME) {
+        window.location.href = "index.html"; // sub-pages go back to the desktop
+      } else {
+        win.classList.add("is-minimized"); // home just tidies up
+      }
     });
   }
 
@@ -281,3 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.readyState === "complete") initWindows();
   else window.addEventListener("load", initWindows, { once: true });
 });
+
+// Let pages launch their own extra windows (e.g. the Snake app in the bin).
+window.setupWindow = setupWindow;
+window.bringToFront = bringToFront;
