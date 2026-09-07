@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game of Life</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #05060d; overflow: hidden; }
+  body { font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif; }
+  canvas { display: block; cursor: crosshair; }
+  .bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 6px;
+    background: rgba(5,6,13,0.88);
+    border-top: 1px solid #2b2f52;
+    font-size: 11px;
+    color: #8ab4ff;
+  }
+  .bar button {
+    font: inherit;
+    padding: 2px 8px;
+    background: #c0c0c0;
+    color: #000;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+  }
+  .bar button:active { border-style: inset; }
+  .bar .gen { margin-left: auto; font-family: "Courier New", monospace; color: #39ff14; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="bar">
+  <button id="play">Pause</button>
+  <button id="stepb">Step</button>
+  <button id="rand">Random</button>
+  <button id="gun">Glider gun</button>
+  <button id="clear">Clear</button>
+  <span class="gen">gen <b id="gen">0</b> &middot; pop <b id="pop">0</b></span>
+</div>
+<script>
+(function () {
+  var cv = document.getElementById("cv");
+  var cx = cv.getContext("2d");
+  var genEl = document.getElementById("gen");
+  var popEl = document.getElementById("pop");
+  var playBtn = document.getElementById("play");
+
+  var CELL = 6;
+  var cols, rows, grid, age, running = true, gen = 0, acc = 0, last = 0;
+  var painting = false, paintVal = 1;
+
+  function resize() {
+    cv.width = window.innerWidth || 400;
+    cv.height = Math.max(80, (window.innerHeight || 300) - 30);
+    var nc = Math.floor(cv.width / CELL);
+    var nr = Math.floor(cv.height / CELL);
+    var old = grid, oc = cols, or_ = rows;
+    cols = nc; rows = nr;
+    grid = new Uint8Array(cols * rows);
+    age = new Uint8Array(cols * rows);
+    if (old) {
+      for (var y = 0; y < Math.min(or_, rows); y++) {
+        for (var x = 0; x < Math.min(oc, cols); x++) grid[y * cols + x] = old[y * oc + x];
+      }
+    }
+  }
+
+  function idx(x, y) { return ((y + rows) % rows) * cols + ((x + cols) % cols); }
+
+  function randomise() {
+    for (var i = 0; i < grid.length; i++) grid[i] = Math.random() < 0.18 ? 1 : 0;
+    age.fill(0);
+    gen = 0;
+  }
+
+  function clear() {
+    grid.fill(0);
+    age.fill(0);
+    gen = 0;
+  }
+
+  // Gosper's glider gun — the first known pattern with unbounded growth.
+  function gliderGun() {
+    clear();
+    var cells = [
+      [0,4],[0,5],[1,4],[1,5],
+      [10,4],[10,5],[10,6],[11,3],[11,7],[12,2],[12,8],[13,2],[13,8],
+      [14,5],[15,3],[15,7],[16,4],[16,5],[16,6],[17,5],
+      [20,2],[20,3],[20,4],[21,2],[21,3],[21,4],[22,1],[22,5],
+      [24,0],[24,1],[24,5],[24,6],
+      [34,2],[34,3],[35,2],[35,3]
+    ];
+    var ox = 3, oy = Math.max(1, Math.floor(rows / 2) - 20);
+    cells.forEach(function (c) {
+      var x = c[0] + ox, y = c[1] + oy;
+      if (x < cols && y < rows) grid[y * cols + x] = 1;
+    });
+  }
+
+  function stepOnce() {
+    var next = new Uint8Array(grid.length);
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var n =
+          grid[idx(x - 1, y - 1)] + grid[idx(x, y - 1)] + grid[idx(x + 1, y - 1)] +
+          grid[idx(x - 1, y)] + grid[idx(x + 1, y)] +
+          grid[idx(x - 1, y + 1)] + grid[idx(x, y + 1)] + grid[idx(x + 1, y + 1)];
+        var i = y * cols + x;
+        var live = grid[i];
+        next[i] = (live && (n === 2 || n === 3)) || (!live && n === 3) ? 1 : 0;
+        if (next[i]) age[i] = Math.min(255, age[i] + 1);
+        else age[i] = 0;
+      }
+    }
+    grid = next;
+    gen++;
+  }
+
+  function draw() {
+    cx.fillStyle = "#05060d";
+    cx.fillRect(0, 0, cv.width, cv.height);
+
+    var pop = 0;
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var i = y * cols + x;
+        if (!grid[i]) continue;
+        pop++;
+        // fresh cells burn hot, long-lived cells cool to deep blue
+        var a = age[i];
+        var hue = a < 2 ? 60 : a < 6 ? 140 : a < 20 ? 190 : 225;
+        var light = a < 2 ? 68 : a < 6 ? 56 : 46;
+        cx.fillStyle = "hsl(" + hue + ",100%," + light + "%)";
+        cx.fillRect(x * CELL, y * CELL, CELL - 1, CELL - 1);
+      }
+    }
+    genEl.textContent = gen;
+    popEl.textContent = pop;
+  }
+
+  function loop(t) {
+    requestAnimationFrame(loop);
+    if (!last) last = t;
+    acc += t - last;
+    last = t;
+    if (running && acc > 70) {
+      acc = 0;
+      stepOnce();
+    }
+    draw();
+  }
+
+  function cellAt(e) {
+    var r = cv.getBoundingClientRect();
+    var x = Math.floor((e.clientX - r.left) / CELL);
+    var y = Math.floor((e.clientY - r.top) / CELL);
+    if (x < 0 || y < 0 || x >= cols || y >= rows) return -1;
+    return y * cols + x;
+  }
+
+  cv.addEventListener("mousedown", function (e) {
+    window.focus();
+    var i = cellAt(e);
+    if (i < 0) return;
+    paintVal = grid[i] ? 0 : 1;
+    grid[i] = paintVal;
+    painting = true;
+  });
+  window.addEventListener("mousemove", function (e) {
+    if (!painting) return;
+    var i = cellAt(e);
+    if (i >= 0) grid[i] = paintVal;
+  });
+  window.addEventListener("mouseup", function () { painting = false; });
+
+  playBtn.addEventListener("click", function () {
+    running = !running;
+    playBtn.textContent = running ? "Pause" : "Play";
+  });
+  document.getElementById("stepb").addEventListener("click", function () {
+    running = false;
+    playBtn.textContent = "Play";
+    stepOnce();
+  });
+  document.getElementById("rand").addEventListener("click", randomise);
+  document.getElementById("gun").addEventListener("click", gliderGun);
+  document.getElementById("clear").addEventListener("click", clear);
+
+  window.addEventListener("keydown", function (e) {
+    if (e.key === " ") { e.preventDefault(); playBtn.click(); }
+    if (e.key === "r" || e.key === "R") randomise();
+    if (e.key === "c" || e.key === "C") clear();
+  });
+  window.addEventListener("resize", resize);
+
+  resize();
+  randomise();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

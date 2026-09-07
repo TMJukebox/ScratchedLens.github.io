@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Minesweeper</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #c0c0c0;
+    font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px;
+    box-sizing: border-box;
+    overflow: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .frame {
+    border: 3px outset #dfdfdf;
+    padding: 6px;
+    background: #c0c0c0;
+    display: inline-block;   /* hug the board rather than stretching */
+  }
+
+  .levels { display: flex; gap: 4px; margin-bottom: 6px; }
+  .levels button {
+    flex: 1;
+    font: inherit;
+    padding: 2px 0;
+    background: #c0c0c0;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+  }
+  .levels button:active { border-style: inset; }
+  .levels button.on { border-style: inset; font-weight: bold; }
+
+  .hud {
+    border: 3px inset #dfdfdf;
+    padding: 4px 6px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .led {
+    background: #000;
+    color: #f00;
+    font-family: "Courier New", monospace;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 1px 4px;
+    border: 1px inset #808080;
+    min-width: 46px;
+    text-align: center;
+  }
+  .face {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    line-height: 1;
+    background: #c0c0c0;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+    padding: 0;
+  }
+  .face:active { border-style: inset; }
+
+  .board {
+    border: 3px inset #dfdfdf;
+    display: grid;
+    gap: 0;
+    background: #808080;
+    width: max-content;      /* exactly as wide as its columns */
+    margin: 0 auto;
+  }
+
+  .cell {
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12px;
+    font-family: "Courier New", monospace;
+    background: #c0c0c0;
+    border: 2px outset #dfdfdf;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  .cell.open {
+    border: 1px solid #9a9a9a;
+    background: #c0c0c0;
+    cursor: default;
+  }
+  .cell.mine { background: #f00; }
+  .n1 { color: #0000ff; } .n2 { color: #008000; } .n3 { color: #ff0000; }
+  .n4 { color: #000080; } .n5 { color: #800000; } .n6 { color: #008080; }
+  .n7 { color: #000000; } .n8 { color: #808080; }
+
+  .hint {
+    text-align: center;
+    color: #444;
+    margin: 6px auto 0;
+    font-size: 10px;
+    max-width: 260px;
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="levels">
+    <button data-level="0" class="on">Beginner</button>
+    <button data-level="1">Intermediate</button>
+  </div>
+  <div class="hud">
+    <span class="led" id="mines">010</span>
+    <button class="face" id="face" title="New game">🙂</button>
+    <span class="led" id="time">000</span>
+  </div>
+  <div class="board" id="board"></div>
+  <p class="hint">left click digs &middot; right click flags &middot; click a number to chord</p>
+</div>
+
+<script>
+(function () {
+  var LEVELS = [{ w: 9, h: 9, m: 10 }, { w: 16, h: 16, m: 40 }];
+  var boardEl = document.getElementById("board");
+  var minesEl = document.getElementById("mines");
+  var timeEl = document.getElementById("time");
+  var faceEl = document.getElementById("face");
+
+  var level = 0, W, H, M;
+  var cells, started, dead, won, flags, opened, timer, seconds;
+
+  function pad(n) {
+    n = Math.max(-99, Math.min(999, n));
+    var s = Math.abs(n).toString();
+    while (s.length < 3) s = "0" + s;
+    return (n < 0 ? "-" : "") + s.slice(n < 0 ? 1 : 0);
+  }
+
+  function idx(x, y) { return y * W + x; }
+  function inBounds(x, y) { return x >= 0 && x < W && y >= 0 && y < H; }
+
+  function neighbours(i) {
+    var x = i % W, y = Math.floor(i / W), out = [];
+    for (var dy = -1; dy <= 1; dy++) {
+      for (var dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        if (inBounds(x + dx, y + dy)) out.push(idx(x + dx, y + dy));
+      }
+    }
+    return out;
+  }
+
+  function reset() {
+    var L = LEVELS[level];
+    W = L.w; H = L.h; M = L.m;
+    cells = [];
+    for (var i = 0; i < W * H; i++) cells.push({ mine: false, open: false, flag: false, n: 0 });
+    started = false; dead = false; won = false;
+    flags = 0; opened = 0; seconds = 0;
+    clearInterval(timer);
+    timer = null;
+    faceEl.textContent = "🙂";
+    timeEl.textContent = pad(0);
+    minesEl.textContent = pad(M);
+    boardEl.style.gridTemplateColumns = "repeat(" + W + ", 18px)";
+    render();
+  }
+
+  // Mines are laid after the first dig, so you never lose on click one.
+  function layMines(safe) {
+    var forbidden = {};
+    forbidden[safe] = true;
+    neighbours(safe).forEach(function (i) { forbidden[i] = true; });
+
+    var pool = [];
+    for (var i = 0; i < cells.length; i++) if (!forbidden[i]) pool.push(i);
+    for (var j = pool.length - 1; j > 0; j--) {
+      var k = Math.floor(Math.random() * (j + 1));
+      var t = pool[j]; pool[j] = pool[k]; pool[k] = t;
+    }
+    pool.slice(0, M).forEach(function (i) { cells[i].mine = true; });
+
+    for (var c = 0; c < cells.length; c++) {
+      cells[c].n = neighbours(c).filter(function (i) { return cells[i].mine; }).length;
+    }
+  }
+
+  function startTimer() {
+    timer = setInterval(function () {
+      seconds++;
+      timeEl.textContent = pad(seconds);
+    }, 1000);
+  }
+
+  function dig(i) {
+    var c = cells[i];
+    if (dead || won || c.open || c.flag) return;
+
+    if (!started) {
+      started = true;
+      layMines(i);
+      startTimer();
+    }
+
+    if (c.mine) return lose(i);
+
+    // Iterative flood fill out from any blank cell.
+    var stack = [i];
+    while (stack.length) {
+      var j = stack.pop();
+      var cj = cells[j];
+      if (cj.open || cj.flag) continue;
+      cj.open = true;
+      opened++;
+      if (cj.n === 0) stack = stack.concat(neighbours(j));
+    }
+    checkWin();
+  }
+
+  // Clicking a satisfied number opens everything around it.
+  function chord(i) {
+    var c = cells[i];
+    if (!c.open || !c.n || dead || won) return;
+    var nb = neighbours(i);
+    var flagged = nb.filter(function (j) { return cells[j].flag; }).length;
+    if (flagged !== c.n) return;
+    nb.forEach(function (j) { if (!cells[j].flag && !cells[j].open) dig(j); });
+  }
+
+  function flag(i) {
+    var c = cells[i];
+    if (dead || won || c.open) return;
+    c.flag = !c.flag;
+    flags += c.flag ? 1 : -1;
+    minesEl.textContent = pad(M - flags);
+    render();
+  }
+
+  function lose(hit) {
+    dead = true;
+    clearInterval(timer);
+    faceEl.textContent = "😵";
+    cells.forEach(function (c) { if (c.mine) c.open = true; });
+    cells[hit].boom = true;
+    render();
+  }
+
+  function checkWin() {
+    if (opened !== W * H - M) { render(); return; }
+    won = true;
+    clearInterval(timer);
+    faceEl.textContent = "😎";
+    cells.forEach(function (c) { if (c.mine && !c.flag) { c.flag = true; flags++; } });
+    minesEl.textContent = pad(0);
+    render();
+  }
+
+  function render() {
+    var html = "";
+    for (var i = 0; i < cells.length; i++) {
+      var c = cells[i];
+      var cls = "cell", txt = "";
+      if (c.open) {
+        cls += " open";
+        if (c.mine) { cls += c.boom ? " mine" : ""; txt = "💣"; }
+        else if (c.n) { cls += " n" + c.n; txt = c.n; }
+      } else if (c.flag) {
+        txt = dead && !c.mine ? "❌" : "🚩";
+      }
+      html += '<div class="' + cls + '" data-i="' + i + '">' + txt + "</div>";
+    }
+    boardEl.innerHTML = html;
+  }
+
+  boardEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  boardEl.addEventListener("mousedown", function (e) {
+    var el = e.target.closest(".cell");
+    if (!el) return;
+    var i = +el.dataset.i;
+    if (e.button === 2) { flag(i); return; }
+    if (e.button !== 0) return;
+    if (cells[i].open) chord(i);
+    else dig(i);
+    render();
+  });
+
+  // Long press flags on touch screens.
+  var touchTimer = null;
+  boardEl.addEventListener("touchstart", function (e) {
+    var el = e.target.closest(".cell");
+    if (!el) return;
+    var i = +el.dataset.i;
+    touchTimer = setTimeout(function () { touchTimer = null; flag(i); }, 400);
+  }, { passive: true });
+  boardEl.addEventListener("touchend", function (e) {
+    if (!touchTimer) return;
+    clearTimeout(touchTimer);
+    touchTimer = null;
+    var el = e.target.closest(".cell");
+    if (!el) return;
+    e.preventDefault();
+    var i = +el.dataset.i;
+    if (cells[i].open) chord(i); else dig(i);
+    render();
+  });
+
+  faceEl.addEventListener("click", reset);
+
+  document.querySelectorAll(".levels button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".levels button").forEach(function (o) { o.classList.remove("on"); });
+      b.classList.add("on");
+      level = +b.dataset.level;
+      reset();
+    });
+  });
+
+  document.addEventListener("mousedown", function () { window.focus(); });
+  reset();
+})();
+</script>
+</body>
+</html>

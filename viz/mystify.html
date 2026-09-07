@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mystify</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  .hud {
+    position: fixed;
+    left: 8px;
+    bottom: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<p class="hud">click to reshuffle &middot; +/- trail length</p>
+<script>
+(function () {
+  var cv = document.getElementById("cv");
+  var cx = cv.getContext("2d");
+  var W, H;
+  var TRAIL = 26;
+  var shapes = [];
+
+  function resize() {
+    W = cv.width = window.innerWidth || 400;
+    H = cv.height = window.innerHeight || 300;
+  }
+
+  function makeShape(points, hue) {
+    var pts = [];
+    for (var i = 0; i < points; i++) {
+      pts.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        dx: (Math.random() * 2 - 1) * 2.2 || 1.4,
+        dy: (Math.random() * 2 - 1) * 2.2 || 1.4
+      });
+    }
+    return { pts: pts, hist: [], hue: hue, drift: 0.35 + Math.random() * 0.5 };
+  }
+
+  function reset() {
+    shapes = [makeShape(4, Math.random() * 360), makeShape(4, Math.random() * 360)];
+  }
+
+  function step(sh) {
+    for (var i = 0; i < sh.pts.length; i++) {
+      var p = sh.pts[i];
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0) { p.x = 0; p.dx = -p.dx; }
+      if (p.x > W) { p.x = W; p.dx = -p.dx; }
+      if (p.y < 0) { p.y = 0; p.dy = -p.dy; }
+      if (p.y > H) { p.y = H; p.dy = -p.dy; }
+    }
+    sh.hue = (sh.hue + sh.drift) % 360;
+    sh.hist.push(sh.pts.map(function (p) { return { x: p.x, y: p.y }; }));
+    while (sh.hist.length > TRAIL) sh.hist.shift();
+  }
+
+  function drawShape(sh) {
+    for (var h = 0; h < sh.hist.length; h++) {
+      var frame = sh.hist[h];
+      var age = h / sh.hist.length;               // 0 = oldest, 1 = newest
+      var hue = (sh.hue - (sh.hist.length - h) * 3 + 360) % 360;
+      cx.strokeStyle = "hsl(" + hue + ", 100%, " + (28 + age * 42) + "%)";
+      cx.globalAlpha = 0.12 + age * 0.88;
+      cx.lineWidth = age > 0.96 ? 2 : 1;
+      cx.beginPath();
+      cx.moveTo(frame[0].x, frame[0].y);
+      for (var i = 1; i < frame.length; i++) cx.lineTo(frame[i].x, frame[i].y);
+      cx.closePath();
+      cx.stroke();
+    }
+    cx.globalAlpha = 1;
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+    cx.fillStyle = "#000";
+    cx.fillRect(0, 0, W, H);
+    for (var i = 0; i < shapes.length; i++) {
+      step(shapes[i]);
+      drawShape(shapes[i]);
+    }
+  }
+
+  window.addEventListener("resize", function () {
+    resize();
+    reset();
+  });
+  window.addEventListener("mousedown", function () { window.focus(); reset(); });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "+" || e.key === "=") TRAIL = Math.min(80, TRAIL + 4);
+    if (e.key === "-" || e.key === "_") TRAIL = Math.max(4, TRAIL - 4);
+  });
+
+  resize();
+  reset();
+  loop();
+})();
+</script>
+</body>
+</html>

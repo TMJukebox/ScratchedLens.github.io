@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Space Invaders</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas {
+    display: block;
+    background: #000;
+    image-rendering: pixelated;
+    aspect-ratio: 480 / 420;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="420"></canvas>
+<script>
+(function () {
+  var cv = document.getElementById("game");
+  var cx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var S = 2;                       // pixel scale for the sprites
+
+  // Sprites as pixel rows — two frames each, so the march animates.
+  var SPR = {
+    top: [
+      ["00011000", "00111100", "01111110", "11011011", "11111111", "00100100", "01011010", "10100101"],
+      ["00011000", "00111100", "01111110", "11011011", "11111111", "00111100", "00100100", "01000010"]
+    ],
+    mid: [
+      ["00100000100", "00010001000", "00111111100", "01101110110", "11111111111", "10111111101", "10100000101", "00011011000"],
+      ["00100000100", "10010001001", "10111111101", "11101110111", "11111111111", "01111111110", "00100000100", "01000000010"]
+    ],
+    bot: [
+      ["000011110000", "011111111110", "111111111111", "110011001100", "111111111111", "001110011100", "011001100110", "110000000011"],
+      ["000011110000", "011111111110", "111111111111", "110011001100", "111111111111", "000111111000", "001100001100", "000110011000"]
+    ],
+    ship: [
+      ["0000001000000", "0000011100000", "0000011100000", "0111111111110", "1111111111111", "1111111111111", "1111111111111", "1101111111011"]
+    ]
+  };
+  var ROW_KIND = ["top", "mid", "mid", "bot", "bot"];
+  var ROW_POINTS = { top: 30, mid: 20, bot: 10 };
+  var ROW_COLOR = { top: "#00baff", mid: "#39ff14", bot: "#fff200" };
+
+  function sprW(s) { return s[0].length * S; }
+  function sprH(s) { return s.length * S; }
+
+  function drawSpr(s, x, y, color) {
+    cx.fillStyle = color;
+    for (var r = 0; r < s.length; r++) {
+      var row = s[r];
+      for (var c = 0; c < row.length; c++) {
+        if (row[c] === "1") cx.fillRect(x + c * S, y + r * S, S, S);
+      }
+    }
+  }
+
+  var COLS = 11, ROWS = 5, CELL_W = 32, CELL_H = 26;
+  var ship, aliens, bullet, bombs, bunkers, dir, stepTimer, frame;
+  var score, lives, wave, state, hiScore = 0, flash;
+
+  function makeBunkers() {
+    // Each bunker is a small grid of chunks that get chewed away by fire.
+    var out = [];
+    var bw = 11, bh = 8, chunk = 4;
+    for (var b = 0; b < 4; b++) {
+      var ox = 46 + b * 108;
+      var oy = H - 96;
+      var blocks = [];
+      for (var r = 0; r < bh; r++) {
+        for (var c = 0; c < bw; c++) {
+          // carve the classic arch out of the underside
+          var arch = r >= bh - 3 && c >= 4 && c <= 6;
+          var corner = (r < 2 && (c < 2 - r || c > bw - 3 + r));
+          if (arch || corner) continue;
+          blocks.push({ x: ox + c * chunk, y: oy + r * chunk, s: chunk });
+        }
+      }
+      out.push(blocks);
+    }
+    return out;
+  }
+
+  function makeAliens() {
+    var out = [];
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var kind = ROW_KIND[r];
+        out.push({
+          kind: kind,
+          col: c,
+          row: r,
+          x: 30 + c * CELL_W,
+          y: 56 + r * CELL_H + Math.min(wave, 4) * 10,
+          alive: true
+        });
+      }
+    }
+    return out;
+  }
+
+  function newWave() {
+    aliens = makeAliens();
+    bullet = null;
+    bombs = [];
+    dir = 1;
+    stepTimer = 0;
+    frame = 0;
+    ship.x = W / 2 - 13;
+  }
+
+  function newGame() {
+    ship = { x: W / 2 - 13, y: H - 40, w: 26, h: 16, speed: 3.4 };
+    score = 0; lives = 3; wave = 0;
+    bunkers = makeBunkers();
+    newWave();
+    state = "play";
+    flash = 0;
+  }
+
+  function alive() { return aliens.filter(function (a) { return a.alive; }); }
+
+  function marchDelay() {
+    var left = alive().length;
+    var base = 620 - wave * 60;
+    return Math.max(55, base * (left / (COLS * ROWS)) + 55);
+  }
+
+  function march() {
+    var live = alive();
+    if (!live.length) return;
+
+    var minX = Math.min.apply(null, live.map(function (a) { return a.x; }));
+    var maxX = Math.max.apply(null, live.map(function (a) { return a.x + sprW(SPR[a.kind][0]); }));
+
+    if ((dir > 0 && maxX + 10 >= W - 10) || (dir < 0 && minX - 10 <= 10)) {
+      dir = -dir;
+      live.forEach(function (a) { a.y += 14; });
+    } else {
+      live.forEach(function (a) { a.x += dir * 9; });
+    }
+    frame ^= 1;
+
+    // Aliens reaching the bunker line end the run.
+    if (live.some(function (a) { return a.y + sprH(SPR[a.kind][0]) >= ship.y - 4; })) {
+      lives = 0;
+      state = "over";
+    }
+  }
+
+  function dropBomb() {
+    var live = alive();
+    if (!live.length || bombs.length >= 2 + wave) return;
+    // Only the lowest alien in a column can fire, like the original.
+    var byCol = {};
+    live.forEach(function (a) {
+      if (!byCol[a.col] || a.y > byCol[a.col].y) byCol[a.col] = a;
+    });
+    var shooters = Object.keys(byCol).map(function (k) { return byCol[k]; });
+    var a2 = shooters[Math.floor(Math.random() * shooters.length)];
+    bombs.push({ x: a2.x + sprW(SPR[a2.kind][0]) / 2 - 1, y: a2.y + sprH(SPR[a2.kind][0]), w: 3, h: 8, v: 2.6 + wave * 0.3 });
+  }
+
+  function hitBunker(x, y, w, h) {
+    for (var b = 0; b < bunkers.length; b++) {
+      var blocks = bunkers[b];
+      for (var i = 0; i < blocks.length; i++) {
+        var k = blocks[i];
+        if (x < k.x + k.s && x + w > k.x && y < k.y + k.s && y + h > k.y) {
+          // take a small bite out of the bunker
+          blocks.splice(i, 1);
+          for (var j = blocks.length - 1; j >= 0; j--) {
+            var d = Math.abs(blocks[j].x - k.x) + Math.abs(blocks[j].y - k.y);
+            if (d <= 4 && Math.random() < 0.6) blocks.splice(j, 1);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  var keys = {};
+
+  function step(dt) {
+    if (state !== "play") return;
+
+    if (keys.ArrowLeft) ship.x -= ship.speed;
+    if (keys.ArrowRight) ship.x += ship.speed;
+    ship.x = Math.max(8, Math.min(W - 8 - ship.w, ship.x));
+
+    stepTimer += dt;
+    if (stepTimer >= marchDelay()) { stepTimer = 0; march(); }
+
+    if (Math.random() < 0.018 + wave * 0.004) dropBomb();
+
+    if (bullet) {
+      bullet.y -= 7;
+      if (bullet.y < 24) bullet = null;
+      else if (hitBunker(bullet.x, bullet.y, bullet.w, bullet.h)) bullet = null;
+    }
+    if (bullet) {
+      for (var i = 0; i < aliens.length; i++) {
+        var a = aliens[i];
+        if (!a.alive) continue;
+        var s = SPR[a.kind][0];
+        if (bullet.x < a.x + sprW(s) && bullet.x + bullet.w > a.x &&
+            bullet.y < a.y + sprH(s) && bullet.y + bullet.h > a.y) {
+          a.alive = false;
+          score += ROW_POINTS[a.kind];
+          bullet = null;
+          break;
+        }
+      }
+    }
+
+    for (var b = bombs.length - 1; b >= 0; b--) {
+      var bo = bombs[b];
+      bo.y += bo.v;
+      if (bo.y > H) { bombs.splice(b, 1); continue; }
+      if (hitBunker(bo.x, bo.y, bo.w, bo.h)) { bombs.splice(b, 1); continue; }
+      if (bo.x < ship.x + ship.w && bo.x + bo.w > ship.x &&
+          bo.y < ship.y + ship.h && bo.y + bo.h > ship.y) {
+        bombs.splice(b, 1);
+        lives--;
+        flash = 20;
+        if (lives <= 0) state = "over";
+        else { bombs = []; bullet = null; ship.x = W / 2 - 13; }
+      }
+    }
+
+    if (!alive().length) {
+      wave++;
+      score += 50;
+      bunkers = makeBunkers();
+      newWave();
+    }
+
+    if (state === "over" && score > hiScore) hiScore = score;
+  }
+
+  function draw() {
+    cx.fillStyle = "#000";
+    cx.fillRect(0, 0, W, H);
+
+    cx.fillStyle = "#fff";
+    cx.font = "bold 12px 'Courier New', monospace";
+    cx.textAlign = "left";
+    cx.fillText("SCORE " + score, 10, 18);
+    cx.textAlign = "center";
+    cx.fillText("WAVE " + (wave + 1), W / 2, 18);
+    cx.textAlign = "right";
+    cx.fillText("HI " + Math.max(hiScore, score), W - 10, 18);
+    cx.fillStyle = "#333";
+    cx.fillRect(0, 24, W, 1);
+
+    for (var i = 0; i < aliens.length; i++) {
+      var a = aliens[i];
+      if (!a.alive) continue;
+      drawSpr(SPR[a.kind][frame], a.x, a.y, ROW_COLOR[a.kind]);
+    }
+
+    cx.fillStyle = "#39ff14";
+    for (var b = 0; b < bunkers.length; b++) {
+      for (var j = 0; j < bunkers[b].length; j++) {
+        var k = bunkers[b][j];
+        cx.fillRect(k.x, k.y, k.s, k.s);
+      }
+    }
+
+    if (state !== "over") {
+      drawSpr(SPR.ship[0], ship.x, ship.y, flash > 0 && (flash >> 2) % 2 ? "#ff2d95" : "#fff");
+      if (flash > 0) flash--;
+    }
+
+    if (bullet) { cx.fillStyle = "#fff"; cx.fillRect(bullet.x, bullet.y, bullet.w, bullet.h); }
+    cx.fillStyle = "#ff5e00";
+    bombs.forEach(function (bo) { cx.fillRect(bo.x, bo.y, bo.w, bo.h); });
+
+    // life counters along the bottom
+    cx.fillStyle = "#666";
+    cx.fillRect(0, H - 18, W, 1);
+    for (var l = 0; l < Math.max(0, lives - 1); l++) {
+      cx.save();
+      cx.translate(10 + l * 34, H - 14);
+      cx.scale(0.75, 0.75);
+      drawSpr(SPR.ship[0], 0, 0, "#888");
+      cx.restore();
+    }
+
+    if (state === "over") {
+      cx.textAlign = "center";
+      cx.fillStyle = "#ff2d95";
+      cx.font = "bold 24px 'Courier New', monospace";
+      cx.fillText("GAME OVER", W / 2, H / 2 - 6);
+      cx.fillStyle = "#fff";
+      cx.font = "12px 'Courier New', monospace";
+      cx.fillText("SCORE " + score, W / 2, H / 2 + 18);
+      cx.fillStyle = "#7a7a7a";
+      cx.font = "10px 'Courier New', monospace";
+      cx.fillText("PRESS SPACE TO DEFEND EARTH AGAIN", W / 2, H / 2 + 40);
+    }
+    cx.textAlign = "left";
+  }
+
+  var last = 0;
+  function loop(t) {
+    requestAnimationFrame(loop);
+    if (!last) last = t;
+    var dt = Math.min(64, t - last);
+    last = t;
+    step(dt);
+    draw();
+  }
+
+  function fire() {
+    if (state === "over") { newGame(); return; }
+    if (bullet) return;
+    bullet = { x: ship.x + ship.w / 2 - 1, y: ship.y - 8, w: 3, h: 8 };
+  }
+
+  document.addEventListener("keydown", function (e) {
+    keys[e.key] = true;
+    if (["ArrowLeft", "ArrowRight", " "].indexOf(e.key) >= 0) e.preventDefault();
+    if (e.key === " ") fire();
+    if (e.key === "r" || e.key === "R") newGame();
+  });
+  document.addEventListener("keyup", function (e) { keys[e.key] = false; });
+  document.addEventListener("mousedown", function () { window.focus(); fire(); });
+
+  newGame();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Solitaire</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #0a7a43;
+    background-image: radial-gradient(circle at 50% 0%, #12a45c 0%, #076235 100%);
+    font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 12px;
+    color: #fff;
+    overflow: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .table { padding: 8px 10px 14px; min-width: 454px; }
+
+  .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar button {
+    font: inherit;
+    padding: 3px 10px;
+    background: #c0c0c0;
+    color: #000;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+  }
+  .bar button:active { border-style: inset; }
+  .bar .stat { opacity: 0.9; }
+  .bar .hint { margin-left: auto; opacity: 0.75; font-size: 10px; }
+
+  .row { display: flex; gap: 10px; }
+  .row.top { margin-bottom: 14px; }
+  .spacer { width: 22px; }
+
+  .pile {
+    position: relative;
+    width: 62px;
+    height: 84px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+  .pile.stock { cursor: pointer; }
+  .tabpile { border: none; height: 300px; }
+  .tabpile::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 62px; height: 84px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+  .found::after {
+    content: attr(data-suit);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: rgba(255,255,255,0.28);
+  }
+
+  .card {
+    position: absolute;
+    left: 0;
+    width: 62px;
+    height: 84px;
+    background: #fffdf7;
+    color: #101010;
+    border: 1px solid #444;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    box-sizing: border-box;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .card.red { color: #d10000; }
+  .card.down {
+    background: #2b3d8f;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.16) 0 3px, transparent 3px 6px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.18) 0 3px, transparent 3px 6px);
+    border-color: #16224f;
+  }
+  .card.sel { outline: 3px solid #fff200; outline-offset: -1px; }
+
+  .ci {
+    position: absolute;
+    top: 3px; left: 4px;
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 12px;
+  }
+  .cm {
+    position: absolute;
+    right: 5px; bottom: 2px;
+    font-size: 26px;
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  .recycle {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .win {
+    margin-top: 10px;
+    background: #fff200;
+    color: #000;
+    border: 2px solid #000;
+    padding: 6px 10px;
+    font-weight: bold;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+  }
+</style>
+</head>
+<body>
+<div class="table" id="table">
+  <div class="bar">
+    <button id="new">New Game</button>
+    <span class="stat">Moves <b id="moves">0</b></span>
+    <span class="hint">click a card, then click where it goes &middot; double-click sends it home</span>
+  </div>
+
+  <div class="row top">
+    <div class="pile stock" data-pile="stock" id="stock"></div>
+    <div class="pile" data-pile="waste" id="waste"></div>
+    <div class="spacer"></div>
+    <div class="pile found" data-pile="found" data-i="0" data-suit="&spades;"></div>
+    <div class="pile found" data-pile="found" data-i="1" data-suit="&hearts;"></div>
+    <div class="pile found" data-pile="found" data-i="2" data-suit="&diams;"></div>
+    <div class="pile found" data-pile="found" data-i="3" data-suit="&clubs;"></div>
+  </div>
+
+  <div class="row tab" id="tab"></div>
+  <div id="banner"></div>
+</div>
+
+<script>
+(function () {
+  var SUIT = ["♠", "♥", "♦", "♣"];
+  var RANK = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  var DOWN_OFF = 8, UP_OFF = 18;
+
+  var tableEl = document.getElementById("table");
+  var tabEl = document.getElementById("tab");
+  var stockEl = document.getElementById("stock");
+  var wasteEl = document.getElementById("waste");
+  var movesEl = document.getElementById("moves");
+  var bannerEl = document.getElementById("banner");
+
+  var st;
+
+  function isRed(s) { return s === 1 || s === 2; }
+
+  for (var t = 0; t < 7; t++) {
+    var d = document.createElement("div");
+    d.className = "pile tabpile";
+    d.dataset.pile = "tab";
+    d.dataset.i = t;
+    tabEl.appendChild(d);
+  }
+
+  function newGame() {
+    var deck = [];
+    for (var s = 0; s < 4; s++) {
+      for (var r = 1; r <= 13; r++) deck.push({ s: s, r: r, up: false });
+    }
+    for (var i = deck.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+    }
+
+    st = { stock: [], waste: [], found: [[], [], [], []], tab: [[], [], [], [], [], [], []], moves: 0, sel: null, won: false };
+
+    for (var c = 0; c < 7; c++) {
+      for (var k = 0; k <= c; k++) {
+        var card = deck.pop();
+        card.up = (k === c);
+        st.tab[c].push(card);
+      }
+    }
+    st.stock = deck;
+    render();
+  }
+
+  function pileArr(p, i) {
+    if (p === "waste") return st.waste;
+    if (p === "found") return st.found[i];
+    if (p === "tab") return st.tab[i];
+    return st.stock;
+  }
+
+  function drawStock() {
+    if (st.stock.length) {
+      var c = st.stock.pop();
+      c.up = true;
+      st.waste.push(c);
+      st.moves++;
+    } else if (st.waste.length) {
+      while (st.waste.length) {
+        var w = st.waste.pop();
+        w.up = false;
+        st.stock.push(w);
+      }
+      st.moves++;
+    }
+    st.sel = null;
+    render();
+  }
+
+  function canPlaceTab(card, i) {
+    var t = st.tab[i];
+    if (!t.length) return card.r === 13;
+    var top = t[t.length - 1];
+    return top.up && isRed(top.s) !== isRed(card.s) && top.r === card.r + 1;
+  }
+
+  function canPlaceFound(card, i) {
+    var f = st.found[i];
+    if (card.s !== i) return false;
+    if (!f.length) return card.r === 1;
+    return f[f.length - 1].r === card.r - 1;
+  }
+
+  function afterMove() {
+    // A tableau pile always shows its top card face up.
+    st.tab.forEach(function (t) {
+      if (t.length && !t[t.length - 1].up) t[t.length - 1].up = true;
+    });
+    st.won = st.found.every(function (f) { return f.length === 13; });
+  }
+
+  function moveSel(destP, destI) {
+    if (!st.sel) return false;
+    if (st.sel.p === destP && st.sel.i === destI) { st.sel = null; return true; }
+
+    var src = pileArr(st.sel.p, st.sel.i);
+    var moving = src.slice(st.sel.idx);
+    if (!moving.length) return false;
+
+    if (destP === "found") {
+      if (moving.length !== 1 || !canPlaceFound(moving[0], destI)) return false;
+      st.found[destI].push(src.pop());
+    } else if (destP === "tab") {
+      if (!canPlaceTab(moving[0], destI)) return false;
+      src.splice(st.sel.idx, moving.length);
+      st.tab[destI] = st.tab[destI].concat(moving);
+    } else {
+      return false;
+    }
+
+    st.moves++;
+    st.sel = null;
+    afterMove();
+    return true;
+  }
+
+  function sendHome(p, i, idx) {
+    var arr = pileArr(p, i);
+    if (!arr.length) return false;
+    if (idx !== undefined && idx >= 0 && idx !== arr.length - 1) return false;
+    var card = arr[arr.length - 1];
+    if (!card.up) return false;
+    for (var f = 0; f < 4; f++) {
+      if (canPlaceFound(card, f)) {
+        st.found[f].push(arr.pop());
+        st.moves++;
+        st.sel = null;
+        afterMove();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ---------- rendering ----------
+
+  function cardHTML(card, p, i, idx, top) {
+    var cls = "card";
+    if (!card.up) cls += " down";
+    else if (isRed(card.s)) cls += " red";
+    if (st.sel && st.sel.p === p && st.sel.i === i && idx >= st.sel.idx) cls += " sel";
+
+    var inner = card.up
+      ? '<span class="ci">' + RANK[card.r] + "<br>" + SUIT[card.s] + '</span><span class="cm">' + SUIT[card.s] + "</span>"
+      : "";
+
+    return '<div class="' + cls + '" data-pile="' + p + '" data-i="' + i + '" data-idx="' + idx +
+      '" style="top:' + top + 'px">' + inner + "</div>";
+  }
+
+  function render() {
+    stockEl.innerHTML = st.stock.length
+      ? cardHTML({ s: 0, r: 1, up: false }, "stock", 0, st.stock.length - 1, 0)
+      : (st.waste.length ? '<div class="recycle">↺</div>' : "");
+
+    wasteEl.innerHTML = st.waste.length
+      ? cardHTML(st.waste[st.waste.length - 1], "waste", 0, st.waste.length - 1, 0)
+      : "";
+
+    for (var f = 0; f < 4; f++) {
+      var el = document.querySelector('.found[data-i="' + f + '"]');
+      var pile = st.found[f];
+      el.innerHTML = pile.length ? cardHTML(pile[pile.length - 1], "found", f, pile.length - 1, 0) : "";
+    }
+
+    var piles = tabEl.children;
+    for (var i = 0; i < 7; i++) {
+      var arr = st.tab[i];
+      var html = "";
+      var top = 0;
+      for (var k = 0; k < arr.length; k++) {
+        html += cardHTML(arr[k], "tab", i, k, top);
+        top += arr[k].up ? UP_OFF : DOWN_OFF;
+      }
+      piles[i].innerHTML = html;
+      piles[i].style.height = Math.max(300, top + 84) + "px";
+    }
+
+    movesEl.textContent = st.moves;
+    bannerEl.innerHTML = st.won
+      ? '<div class="win">YOU WIN &mdash; ' + st.moves + " moves. Deal another?</div>"
+      : "";
+  }
+
+  // ---------- input ----------
+
+  // Every click redraws the piles, which breaks the browser's own dblclick
+  // pairing — so the double-click is timed here instead.
+  var lastClick = { key: "", t: 0 };
+
+  tableEl.addEventListener("click", function (e) {
+    if (e.target.id === "new") return;
+    var el = e.target.closest("[data-pile]");
+    if (!el) { st.sel = null; render(); return; }
+
+    var p = el.dataset.pile;
+    var i = el.dataset.i !== undefined ? +el.dataset.i : 0;
+    var idx = el.dataset.idx !== undefined ? +el.dataset.idx : -1;
+
+    if (p === "stock") { lastClick = { key: "", t: 0 }; drawStock(); return; }
+
+    var key = p + ":" + i + ":" + idx;
+    var now = Date.now();
+    var isDouble = key === lastClick.key && now - lastClick.t < 450;
+    lastClick = { key: key, t: now };
+
+    if (isDouble && (p === "tab" || p === "waste")) {
+      if (sendHome(p, i, idx)) {
+        lastClick = { key: "", t: 0 };
+        render();
+        return;
+      }
+    }
+
+    // With something already picked up, a click is an attempt to put it down.
+    if (st.sel && (p === "found" || p === "tab")) {
+      if (moveSel(p, i)) { render(); return; }
+    }
+
+    var arr = pileArr(p, i);
+    if (!arr.length) { st.sel = null; render(); return; }
+
+    if (p === "tab") {
+      var pick = idx >= 0 ? idx : arr.length - 1;
+      if (!arr[pick] || !arr[pick].up) { st.sel = null; render(); return; }
+      st.sel = { p: p, i: i, idx: pick };
+    } else {
+      st.sel = { p: p, i: i, idx: arr.length - 1 };
+    }
+    render();
+  });
+
+  document.getElementById("new").addEventListener("click", newGame);
+  document.addEventListener("mousedown", function () { window.focus(); });
+
+  newGame();
+})();
+</script>
+</body>
+</html>

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recycle Bin — Aden</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
 <div class="page-wrap">
-  <div class="window content-window" data-width="460" data-height="300">
+  <div class="window content-window" data-width="520" data-height="430">
     <div class="title-bar tb-navy">
       <div class="title-bar-text">RECYCLE BIN</div>
       <div class="title-bar-controls">
@@ -20,29 +20,98 @@
       </div>
     </div>
     <div class="window-body">
-      <p class="bin-status">Recycle Bin &mdash; 1 item</p>
-      <div class="bin-grid">
-        <a class="desktop-icon bin-icon" id="open-snake" href="snake.html" role="button">
-          <span class="icon-glyph glyph-emoji">🐍</span>
-          <span class="label">Snake</span>
-        </a>
+      <p class="bin-status">Recycle Bin &mdash; 13 items. Nothing in here was ever really deleted. Double-click anything.</p>
+
+      <div class="bin-panel">
+        <h2 class="bin-head">Games</h2>
+        <div class="bin-grid">
+
+          <a class="desktop-icon bin-icon" href="games/snake.html"
+             data-title="SNAKE.EXE" data-tb="tb-green" data-w="424" data-h="452">
+            <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32">
+            <span class="label">Snake</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/tetris.html"
+             data-title="TETRIS.EXE" data-tb="tb-purple" data-w="344" data-h="472">
+            <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32">
+            <span class="label">Tetris</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/minesweeper.html"
+             data-title="MINESWEEPER.EXE" data-tb="tb-navy" data-w="348" data-h="440">
+            <img class="icon-glyph" src="img/bin-minesweeper.png?v=3" alt="" width="32" height="32">
+            <span class="label">Minesweeper</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/solitaire.html"
+             data-title="SOLITAIRE.EXE" data-tb="tb-navy" data-w="500" data-h="506">
+            <img class="icon-glyph" src="img/bin-solitaire.png?v=3" alt="" width="32" height="32">
+            <span class="label">Solitaire</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/poker.html"
+             data-title="VIDPOKER.EXE" data-tb="tb-purple" data-w="484" data-h="486">
+            <img class="icon-glyph" src="img/bin-cards.png?v=3" alt="" width="32" height="32">
+            <span class="label">Video Poker</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/pong.html"
+             data-title="PONG.EXE" data-tb="tb-blue" data-w="504" data-h="372">
+            <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32">
+            <span class="label">Pong</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/breakout.html"
+             data-title="BREAKOUT.EXE" data-tb="tb-pink" data-w="424" data-h="492">
+            <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32">
+            <span class="label">Breakout</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="games/invaders.html"
+             data-title="INVADERS.EXE" data-tb="tb-green" data-w="504" data-h="472">
+            <img class="icon-glyph" src="img/bin-spider.png?v=3" alt="" width="32" height="32">
+            <span class="label">Invaders</span>
+          </a>
+
+        </div>
+
+        <h2 class="bin-head">Screensavers &amp; toys</h2>
+        <div class="bin-grid">
+
+          <a class="desktop-icon bin-icon" href="viz/starfield.html"
+             data-title="STARS.SCR" data-tb="tb-blue" data-w="520" data-h="400">
+            <img class="icon-glyph" src="img/bin-monitor-night.png?v=3" alt="" width="32" height="32">
+            <span class="label">Starfield</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="viz/mystify.html"
+             data-title="MYSTIFY.SCR" data-tb="tb-pink" data-w="520" data-h="400">
+            <img class="icon-glyph" src="img/bin-monitor-tv.png?v=3" alt="" width="32" height="32">
+            <span class="label">Mystify</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="viz/matrix.html"
+             data-title="RAIN.SCR" data-tb="tb-green" data-w="520" data-h="400">
+            <img class="icon-glyph" src="img/bin-console.png?v=3" alt="" width="32" height="32">
+            <span class="label">Digital Rain</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="viz/life.html"
+             data-title="LIFE.EXE" data-tb="tb-green" data-w="560" data-h="430">
+            <img class="icon-glyph" src="img/bin-tree.png?v=3" alt="" width="32" height="32">
+            <span class="label">Life</span>
+          </a>
+
+          <a class="desktop-icon bin-icon" href="viz/mandelbrot.html"
+             data-title="MANDEL.EXE" data-tb="tb-purple" data-w="560" data-h="440">
+            <img class="icon-glyph" src="img/bin-magnify.png?v=3" alt="" width="32" height="32">
+            <span class="label">Mandelbrot</span>
+          </a>
+
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Snake app window — launched from the icon above, hidden until then. -->
-<div class="window app-window" id="snake-window" data-width="424" data-height="452" hidden>
-  <div class="title-bar tb-green">
-    <div class="title-bar-text">SNAKE.EXE</div>
-    <div class="title-bar-controls">
-      <button aria-label="Minimize"></button>
-      <button aria-label="Maximize"></button>
-      <button aria-label="Close"></button>
-    </div>
-  </div>
-  <div class="window-body snake-body">
-    <iframe class="snake-frame" title="Snake game" src="about:blank" data-src="snake.html"></iframe>
   </div>
 </div>
 
@@ -69,37 +138,135 @@
   </div>
 </div>
 
-<script src="js/script.js?v=2"></script>
+<script src="js/script.js?v=3"></script>
 <script>
-  // Launch the Snake app window when its bin icon is clicked.
+  // Each bin icon launches its page inside its own draggable app window, with
+  // a taskbar button to match. Without JS (or on a phone) the icons are just
+  // links to the pages themselves.
   (function () {
-    var icon = document.getElementById("open-snake");
-    var win = document.getElementById("snake-window");
-    if (!icon || !win) return;
-    var frame = win.querySelector(".snake-frame");
-    var ready = false;
+    var apps = {};
+    var bar = document.querySelector(".taskbar-links");
+    var cascade = 0;
 
-    icon.addEventListener("click", function (e) {
-      e.preventDefault();
+    function focusFrame(frame) {
+      setTimeout(function () {
+        try { frame.contentWindow.focus(); } catch (err) {}
+      }, 80);
+    }
 
-      // Fresh game when opening from closed; resume when restoring from minimized.
-      if (win.hidden) {
-        frame.src = frame.dataset.src;
+    function create(icon) {
+      var title = icon.dataset.title || "APP";
+      var glyph = icon.querySelector(".icon-glyph");
+      var label = icon.querySelector(".label");
+
+      var win = document.createElement("div");
+      win.className = "window app-window";
+      win.dataset.width = icon.dataset.w || 480;
+      win.dataset.height = icon.dataset.h || 400;
+      win.hidden = true;
+      win.innerHTML =
+        '<div class="title-bar ' + (icon.dataset.tb || "tb-navy") + '">' +
+          '<div class="title-bar-text"></div>' +
+          '<div class="title-bar-controls">' +
+            '<button aria-label="Minimize"></button>' +
+            '<button aria-label="Maximize"></button>' +
+            '<button aria-label="Close"></button>' +
+          "</div>" +
+        "</div>" +
+        '<div class="window-body app-body">' +
+          '<iframe class="app-frame" src="about:blank"></iframe>' +
+        "</div>";
+      win.querySelector(".title-bar-text").textContent = title;
+
+      var frame = win.querySelector(".app-frame");
+      frame.title = title;
+      document.body.appendChild(win);
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn-task";
+      var labelText = label ? label.textContent : title;
+      if (glyph && glyph.tagName === "IMG") {
+        var bi = document.createElement("img");
+        bi.src = glyph.src;
+        bi.alt = "";
+        bi.width = 16;
+        bi.height = 16;
+        bi.style.cssText =
+          "width:16px;height:16px;margin-right:4px;vertical-align:-3px;image-rendering:pixelated";
+        btn.appendChild(bi);
+        btn.appendChild(document.createTextNode(labelText));
+      } else {
+        btn.textContent = (glyph ? glyph.textContent + " " : "") + labelText;
       }
+      btn.hidden = true;
+      btn.addEventListener("click", function () {
+        if (win.hidden) return;
+        if (win.classList.contains("is-minimized")) {
+          win.classList.remove("is-minimized");
+          window.bringToFront(win);
+          focusFrame(frame);
+        } else {
+          win.classList.add("is-minimized");
+        }
+      });
+      bar.appendChild(btn);
 
+      // Keep the taskbar button in step with its window, and stop a closed
+      // app from animating away in the background.
+      function sync() {
+        var open = !win.hidden;
+        btn.hidden = !open;
+        btn.classList.toggle("active", open && !win.classList.contains("is-minimized"));
+        if (!open && frame.getAttribute("src") !== "about:blank") {
+          frame.setAttribute("src", "about:blank");
+        }
+      }
+      new MutationObserver(sync).observe(win, {
+        attributes: true,
+        attributeFilter: ["hidden", "class"]
+      });
+
+      return { win: win, frame: frame, btn: btn, src: icon.getAttribute("href"), ready: false };
+    }
+
+    function launch(icon) {
+      var key = icon.getAttribute("href");
+      if (!apps[key]) apps[key] = create(icon);
+      var rec = apps[key];
+      var win = rec.win;
+
+      // Opening from closed starts a fresh run; restoring keeps the session.
+      if (win.hidden) rec.frame.setAttribute("src", rec.src);
       win.hidden = false;
       win.classList.remove("is-minimized");
 
-      if (!ready && typeof window.setupWindow === "function") {
-        window.setupWindow(win); // honours data-width / data-height
-        ready = true;
-      }
-      if (typeof window.bringToFront === "function") {
-        window.bringToFront(win);
+      if (!rec.ready) {
+        window.setupWindow(win);
+        rec.ready = true;
+
+        // Cascade, so the second window doesn't land exactly on the first.
+        var off = (cascade++ % 5) * 24;
+        var vw = window.innerWidth || 1024;
+        var vh = window.innerHeight || 768;
+        var l = (parseFloat(win.style.left) || 0) + off;
+        var t = (parseFloat(win.style.top) || 0) + off;
+        win.style.left = Math.max(8, Math.min(l, vw - win.offsetWidth - 8)) + "px";
+        win.style.top = Math.max(8, Math.min(t, vh - 40 - win.offsetHeight - 8)) + "px";
       }
 
-      // Focus the frame so the arrow keys drive the snake straight away.
-      try { frame.contentWindow.focus(); } catch (err) {}
+      window.bringToFront(win);
+      focusFrame(rec.frame);
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".bin-icon"), function (icon) {
+      icon.addEventListener("click", function (e) {
+        // Everything opens in a window, at any size — setupWindow clamps the
+        // geometry to the viewport. Without JS the href opens the page raw.
+        if (typeof window.setupWindow !== "function") return;
+        e.preventDefault();
+        launch(icon);
+      });
     });
   })();
 </script>

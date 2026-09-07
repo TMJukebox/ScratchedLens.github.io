@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pong</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; cursor: none; }
+  canvas {
+    display: block;
+    background: #000;
+    image-rendering: pixelated;
+    aspect-ratio: 480 / 320;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="320"></canvas>
+<script>
+(function () {
+  var cv = document.getElementById("game");
+  var cx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+
+  var PW = 8, PH = 56, BS = 8, TARGET = 11;
+  var PX = 16, CX = W - 16 - PW;
+
+  var py = H / 2 - PH / 2, cy = H / 2 - PH / 2;
+  var ball = { x: 0, y: 0, dx: 0, dy: 0 };
+  var ps = 0, cs = 0;
+  var state = "ready";           // ready | play | over
+  var keys = {};
+
+  function serve(dir) {
+    ball.x = W / 2 - BS / 2;
+    ball.y = H / 2 - BS / 2;
+    var a = Math.random() * 0.6 - 0.3;
+    ball.dx = dir * 4.2 * Math.cos(a);
+    ball.dy = 4.2 * Math.sin(a);
+  }
+
+  function newGame() {
+    ps = 0; cs = 0;
+    state = "ready";
+    serve(Math.random() < 0.5 ? -1 : 1);
+  }
+
+  function go() {
+    if (state === "over") newGame();
+    else if (state === "ready") state = "play";
+  }
+
+  function bounce(nx, paddleY, dir) {
+    ball.x = nx;
+    var rel = ((ball.y + BS / 2) - (paddleY + PH / 2)) / (PH / 2);
+    rel = Math.max(-1, Math.min(1, rel));
+    var sp = Math.min(Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * 1.06, 9.5);
+    var ang = rel * 0.9;
+    ball.dx = dir * sp * Math.cos(ang);
+    ball.dy = sp * Math.sin(ang);
+  }
+
+  function point(toPlayer) {
+    if (toPlayer) ps++; else cs++;
+    if (ps >= TARGET || cs >= TARGET) state = "over";
+    else state = "ready";
+    serve(toPlayer ? 1 : -1);
+  }
+
+  function step() {
+    if (keys.ArrowUp || keys.w) py -= 6;
+    if (keys.ArrowDown || keys.s) py += 6;
+    py = Math.max(0, Math.min(H - PH, py));
+
+    // The computer tracks the ball, but only while it is coming this way,
+    // and only so fast — which is exactly how you beat it.
+    var target = ball.dx > 0 ? ball.y + BS / 2 - PH / 2 : H / 2 - PH / 2;
+    var d = target - cy;
+    cy += Math.max(-4.3, Math.min(4.3, d * 0.11));
+    cy = Math.max(0, Math.min(H - PH, cy));
+
+    if (state !== "play") return;
+
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if (ball.y <= 0) { ball.y = 0; ball.dy = -ball.dy; }
+    if (ball.y + BS >= H) { ball.y = H - BS; ball.dy = -ball.dy; }
+
+    if (ball.dx < 0 && ball.x <= PX + PW && ball.x + BS >= PX &&
+        ball.y + BS > py && ball.y < py + PH) {
+      bounce(PX + PW, py, 1);
+    }
+    if (ball.dx > 0 && ball.x + BS >= CX && ball.x <= CX + PW &&
+        ball.y + BS > cy && ball.y < cy + PH) {
+      bounce(CX - BS, cy, -1);
+    }
+
+    if (ball.x + BS < 0) point(false);
+    else if (ball.x > W) point(true);
+  }
+
+  function draw() {
+    cx.fillStyle = "#000";
+    cx.fillRect(0, 0, W, H);
+
+    cx.fillStyle = "#2f2f2f";
+    for (var y = 8; y < H; y += 24) cx.fillRect(W / 2 - 2, y, 4, 12);
+
+    cx.fillStyle = "#fff";
+    cx.font = "bold 34px 'Courier New', monospace";
+    cx.textAlign = "center";
+    cx.fillText(String(ps), W / 2 - 60, 44);
+    cx.fillText(String(cs), W / 2 + 60, 44);
+
+    cx.fillRect(PX, py, PW, PH);
+    cx.fillRect(CX, cy, PW, PH);
+    if (state !== "over") cx.fillRect(ball.x, ball.y, BS, BS);
+
+    cx.font = "11px 'Courier New', monospace";
+    cx.fillStyle = "#7a7a7a";
+    cx.fillText("YOU", W / 2 - 60, 60);
+    cx.fillText("CPU", W / 2 + 60, 60);
+
+    if (state === "ready") {
+      cx.fillStyle = "#fff";
+      cx.font = "bold 13px 'Courier New', monospace";
+      cx.fillText("CLICK OR PRESS SPACE TO SERVE", W / 2, H - 40);
+      cx.fillStyle = "#7a7a7a";
+      cx.font = "10px 'Courier New', monospace";
+      cx.fillText("MOUSE OR ARROW KEYS TO MOVE — FIRST TO " + TARGET, W / 2, H - 22);
+    } else if (state === "over") {
+      cx.fillStyle = ps > cs ? "#39ff14" : "#ff2d95";
+      cx.font = "bold 22px 'Courier New', monospace";
+      cx.fillText(ps > cs ? "YOU WIN" : "CPU WINS", W / 2, H / 2 + 4);
+      cx.fillStyle = "#fff";
+      cx.font = "11px 'Courier New', monospace";
+      cx.fillText("CLICK OR PRESS SPACE FOR A REMATCH", W / 2, H / 2 + 28);
+    }
+    cx.textAlign = "left";
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+    step();
+    draw();
+  }
+
+  cv.addEventListener("mousemove", function (e) {
+    var r = cv.getBoundingClientRect();
+    if (!r.height) return;
+    py = (e.clientY - r.top) * (H / r.height) - PH / 2;
+    py = Math.max(0, Math.min(H - PH, py));
+  });
+
+  document.addEventListener("mousedown", function () { window.focus(); go(); });
+
+  document.addEventListener("keydown", function (e) {
+    var k = e.key === "W" ? "w" : e.key === "S" ? "s" : e.key;
+    keys[k] = true;
+    if (["ArrowUp", "ArrowDown", " "].indexOf(k) >= 0) e.preventDefault();
+    if (k === " ") go();
+    if (k === "r" || k === "R") newGame();
+  });
+  document.addEventListener("keyup", function (e) {
+    var k = e.key === "W" ? "w" : e.key === "S" ? "s" : e.key;
+    keys[k] = false;
+  });
+
+  newGame();
+  loop();
+})();
+</script>
+</body>
+</html>

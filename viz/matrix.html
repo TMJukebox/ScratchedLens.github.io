@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Digital Rain</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  .hud {
+    position: fixed;
+    left: 8px;
+    bottom: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    color: rgba(57,255,20,0.45);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<p class="hud">click to change palette &middot; +/- density</p>
+<script>
+(function () {
+  var cv = document.getElementById("cv");
+  var cx = cv.getContext("2d");
+  var GLYPHS = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789:.=*+-<>";
+  var PALETTES = [
+    { head: "#d8ffd8", body: "#39ff14", dim: "rgba(0,0,0,0.08)" },
+    { head: "#d8f4ff", body: "#00baff", dim: "rgba(0,0,0,0.08)" },
+    { head: "#ffe0f2", body: "#ff2d95", dim: "rgba(0,0,0,0.09)" },
+    { head: "#fff8cc", body: "#fff200", dim: "rgba(0,0,0,0.09)" }
+  ];
+
+  var pal = 0, FONT = 14, cols, drops, speeds, W, H;
+
+  function resize() {
+    W = cv.width = window.innerWidth || 400;
+    H = cv.height = window.innerHeight || 300;
+    cols = Math.ceil(W / FONT);
+    drops = [];
+    speeds = [];
+    for (var i = 0; i < cols; i++) {
+      drops.push(Math.random() * -60);
+      speeds.push(0.4 + Math.random() * 0.9);
+    }
+    cx.fillStyle = "#000";
+    cx.fillRect(0, 0, W, H);
+  }
+
+  function glyph() {
+    return GLYPHS.charAt(Math.floor(Math.random() * GLYPHS.length));
+  }
+
+  function frame() {
+    requestAnimationFrame(frame);
+    var p = PALETTES[pal];
+
+    // fade the previous frame instead of clearing — that is the trail
+    cx.fillStyle = p.dim;
+    cx.fillRect(0, 0, W, H);
+
+    cx.font = FONT + "px 'Courier New', monospace";
+    cx.textBaseline = "top";
+
+    for (var i = 0; i < cols; i++) {
+      var y = drops[i] * FONT;
+      if (y > 0) {
+        cx.fillStyle = p.body;
+        cx.fillText(glyph(), i * FONT, y - FONT);
+        cx.fillStyle = p.head;
+        cx.fillText(glyph(), i * FONT, y);
+      }
+      drops[i] += speeds[i];
+      if (y > H && Math.random() > 0.975) {
+        drops[i] = Math.random() * -20;
+        speeds[i] = 0.4 + Math.random() * 0.9;
+      }
+    }
+  }
+
+  window.addEventListener("resize", resize);
+  window.addEventListener("mousedown", function () {
+    window.focus();
+    pal = (pal + 1) % PALETTES.length;
+  });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "+" || e.key === "=") { FONT = Math.max(8, FONT - 2); resize(); }
+    if (e.key === "-" || e.key === "_") { FONT = Math.min(28, FONT + 2); resize(); }
+  });
+
+  resize();
+  frame();
+})();
+</script>
+</body>
+</html>

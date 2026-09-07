@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Starfield</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  .hud {
+    position: fixed;
+    left: 8px;
+    bottom: 6px;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<p class="hud">move the mouse to steer &middot; hold click for warp &middot; +/- speed</p>
+<script>
+(function () {
+  var cv = document.getElementById("cv");
+  var cx = cv.getContext("2d");
+  var W, H, cxp, cyp;
+  var COUNT = 520, DEPTH = 1000, FOV = 320;
+  var stars = [];
+  var speed = 6, warp = 0;
+  var steerX = 0, steerY = 0;
+
+  function resize() {
+    W = cv.width = window.innerWidth || 400;
+    H = cv.height = window.innerHeight || 300;
+    cxp = W / 2;
+    cyp = H / 2;
+  }
+
+  function spawn(s) {
+    s.x = (Math.random() - 0.5) * 2400;
+    s.y = (Math.random() - 0.5) * 2400;
+    s.z = Math.random() * DEPTH + 1;
+    s.px = null;
+    s.py = null;
+    // a faint spread of star colours, mostly white with the odd blue/amber
+    var t = Math.random();
+    s.color = t > 0.94 ? "#ffd6a0" : t > 0.86 ? "#a8d4ff" : "#ffffff";
+  }
+
+  for (var i = 0; i < COUNT; i++) {
+    var s = {};
+    spawn(s);
+    stars.push(s);
+  }
+
+  function frame() {
+    requestAnimationFrame(frame);
+
+    // motion blur instead of a hard clear — this is what makes the streaks
+    cx.fillStyle = "rgba(0,0,0,0.32)";
+    cx.fillRect(0, 0, W, H);
+
+    var v = speed + warp;
+    var ox = cxp + steerX;
+    var oy = cyp + steerY;
+
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      s.z -= v;
+      if (s.z <= 1) { spawn(s); continue; }
+
+      var k = FOV / s.z;
+      var x = s.x * k + ox;
+      var y = s.y * k + oy;
+
+      if (x < -50 || x > W + 50 || y < -50 || y > H + 50) {
+        if (s.z < DEPTH * 0.5) { spawn(s); continue; }
+      }
+
+      var size = Math.max(0.4, (1 - s.z / DEPTH) * 3.2);
+      var alpha = Math.min(1, (1 - s.z / DEPTH) * 1.6 + 0.08);
+
+      if (s.px !== null && v > 3) {
+        cx.strokeStyle = s.color;
+        cx.globalAlpha = alpha * 0.85;
+        cx.lineWidth = size;
+        cx.beginPath();
+        cx.moveTo(s.px, s.py);
+        cx.lineTo(x, y);
+        cx.stroke();
+      } else {
+        cx.globalAlpha = alpha;
+        cx.fillStyle = s.color;
+        cx.fillRect(x, y, size, size);
+      }
+
+      s.px = x;
+      s.py = y;
+    }
+    cx.globalAlpha = 1;
+
+    if (warp > 0) warp *= 0.94;
+  }
+
+  window.addEventListener("resize", resize);
+  window.addEventListener("mousemove", function (e) {
+    steerX = (e.clientX - W / 2) * 0.25;
+    steerY = (e.clientY - H / 2) * 0.25;
+  });
+  window.addEventListener("mousedown", function () { window.focus(); warp = 28; });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "+" || e.key === "=") speed = Math.min(30, speed + 1);
+    if (e.key === "-" || e.key === "_") speed = Math.max(1, speed - 1);
+    if (e.key === " ") { e.preventDefault(); warp = 40; }
+  });
+
+  resize();
+  frame();
+})();
+</script>
+</body>
+</html>

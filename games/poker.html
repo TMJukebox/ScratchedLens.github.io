@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video Poker</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #04122b;
+    background-image: radial-gradient(circle at 50% 0%, #10305e 0%, #04122b 70%);
+    font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif;
+    font-size: 12px;
+    color: #fff;
+    overflow: auto;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .cab { padding: 10px; min-width: 436px; }
+
+  h1 {
+    margin: 0 0 8px;
+    font-family: "Courier New", monospace;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #fff200;
+    text-shadow: 0 0 6px rgba(255,242,0,0.55);
+  }
+
+  /* ---- paytable ---- */
+  table.pay {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid #2a63b8;
+    background: rgba(0,0,0,0.45);
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  table.pay td { padding: 1px 5px; white-space: nowrap; }
+  table.pay td.name { color: #00baff; text-align: left; }
+  table.pay td.amt { text-align: right; color: #d8d8d8; width: 46px; }
+  table.pay td.amt.on { background: #12336b; color: #fff200; font-weight: bold; }
+  table.pay tr.hit td { background: #6d0032; color: #fff; }
+  table.pay tr.hit td.name { color: #ff2d95; }
+  table.pay tr.hit td.amt.on { background: #b3004f; color: #fff200; }
+
+  /* ---- cards ---- */
+  .hand { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+  .slot { width: 68px; }
+
+  .held {
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    font-family: "Courier New", monospace;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #04122b;
+    background: transparent;
+    margin-bottom: 3px;
+    border-radius: 2px;
+  }
+  .slot.on .held { background: #fff200; }
+
+  .card {
+    position: relative;
+    width: 68px;
+    height: 96px;
+    background: #fffdf7;
+    color: #101010;
+    border: 1px solid #444;
+    border-radius: 5px;
+    box-sizing: border-box;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .card.red { color: #d10000; }
+  .card.down {
+    background: #2b3d8f;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.16) 0 3px, transparent 3px 6px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.18) 0 3px, transparent 3px 6px);
+    border-color: #16224f;
+    cursor: default;
+  }
+  .slot.on .card { outline: 3px solid #fff200; outline-offset: -1px; }
+
+  .ci {
+    position: absolute;
+    top: 4px; left: 5px;
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 13px;
+  }
+  .cm {
+    position: absolute;
+    right: 6px; bottom: 2px;
+    font-size: 30px;
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  /* ---- read-outs and buttons ---- */
+  .msg {
+    text-align: center;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    font-weight: bold;
+    color: #39ff14;
+    height: 18px;
+    margin-bottom: 6px;
+  }
+  .msg.win { color: #fff200; }
+
+  .meters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-family: "Courier New", monospace;
+  }
+  .meter {
+    flex: 1;
+    border: 2px inset #2a63b8;
+    background: #000;
+    padding: 3px 6px;
+    text-align: center;
+  }
+  .meter span { display: block; font-size: 9px; color: #00baff; letter-spacing: 1px; }
+  .meter b { font-size: 16px; color: #fff200; }
+
+  .controls { display: flex; gap: 6px; }
+  .controls button {
+    flex: 1;
+    font: inherit;
+    font-weight: bold;
+    padding: 6px 0;
+    background: #c0c0c0;
+    color: #000;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+  }
+  .controls button:active:not(:disabled) { border-style: inset; }
+  .controls button:disabled { color: #808080; cursor: default; }
+  .controls button.go { background: #ff2d95; color: #fff; }
+  .controls button.go:disabled { background: #7a4763; color: #d0b8c5; }
+
+  .foot { text-align: center; font-size: 10px; opacity: 0.65; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="cab">
+  <h1>JACKS OR BETTER</h1>
+  <table class="pay" id="pay"></table>
+
+  <div class="hand" id="hand"></div>
+  <div class="msg" id="msg">PLACE YOUR BET</div>
+
+  <div class="meters">
+    <div class="meter"><span>CREDITS</span><b id="credits">200</b></div>
+    <div class="meter"><span>BET</span><b id="bet">5</b></div>
+    <div class="meter"><span>WIN</span><b id="win">0</b></div>
+  </div>
+
+  <div class="controls">
+    <button id="betone">BET ONE</button>
+    <button id="maxbet">MAX BET</button>
+    <button id="deal" class="go">DEAL</button>
+  </div>
+
+  <p class="foot">click a card to hold it &middot; keys 1&ndash;5 hold &middot; enter deals</p>
+</div>
+
+<script>
+(function () {
+  var SUIT = ["♠", "♥", "♦", "♣"];
+  var RANK = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+
+  // Classic 9/6 Jacks or Better pay table, per credit bet.
+  var PAYS = [
+    { k: "RF", name: "ROYAL FLUSH",     row: [250, 500, 750, 1000, 4000] },
+    { k: "SF", name: "STRAIGHT FLUSH",  per: 50 },
+    { k: "4K", name: "FOUR OF A KIND",  per: 25 },
+    { k: "FH", name: "FULL HOUSE",      per: 9 },
+    { k: "FL", name: "FLUSH",           per: 6 },
+    { k: "ST", name: "STRAIGHT",        per: 4 },
+    { k: "3K", name: "THREE OF A KIND", per: 3 },
+    { k: "2P", name: "TWO PAIR",        per: 2 },
+    { k: "JB", name: "JACKS OR BETTER", per: 1 }
+  ];
+
+  var handEl = document.getElementById("hand");
+  var payEl = document.getElementById("pay");
+  var msgEl = document.getElementById("msg");
+  var creditsEl = document.getElementById("credits");
+  var betEl = document.getElementById("bet");
+  var winEl = document.getElementById("win");
+  var dealBtn = document.getElementById("deal");
+  var betOneBtn = document.getElementById("betone");
+  var maxBetBtn = document.getElementById("maxbet");
+
+  var credits = 200, bet = 5, win = 0;
+  var deck = [], hand = [], held = [false, false, false, false, false];
+  var phase = "bet";          // bet | draw
+  var lastHit = null;
+
+  function payout(p, b) {
+    return p.row ? p.row[b - 1] : p.per * b;
+  }
+
+  function shuffle() {
+    deck = [];
+    for (var s = 0; s < 4; s++) {
+      for (var r = 1; r <= 13; r++) deck.push({ s: s, r: r });
+    }
+    for (var i = deck.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+    }
+  }
+
+  function evaluate(h) {
+    var counts = {};
+    h.forEach(function (c) { counts[c.r] = (counts[c.r] || 0) + 1; });
+    var vals = Object.keys(counts).map(Number);
+    var freq = vals.map(function (v) { return counts[v]; }).sort(function (a, b) { return b - a; });
+
+    var flush = h.every(function (c) { return c.s === h[0].s; });
+
+    var uniq = vals.slice().sort(function (a, b) { return a - b; });
+    var straight = false, royal = false;
+    if (uniq.length === 5) {
+      if (uniq[4] - uniq[0] === 4) straight = true;      // includes the A-2-3-4-5 wheel
+      if (uniq[0] === 1 && uniq[1] === 10 && uniq[2] === 11 && uniq[3] === 12 && uniq[4] === 13) {
+        straight = true;
+        royal = true;
+      }
+    }
+
+    if (straight && flush) return royal ? "RF" : "SF";
+    if (freq[0] === 4) return "4K";
+    if (freq[0] === 3 && freq[1] === 2) return "FH";
+    if (flush) return "FL";
+    if (straight) return "ST";
+    if (freq[0] === 3) return "3K";
+    if (freq[0] === 2 && freq[1] === 2) return "2P";
+    if (freq[0] === 2) {
+      for (var i = 0; i < vals.length; i++) {
+        if (counts[vals[i]] === 2 && (vals[i] === 1 || vals[i] >= 11)) return "JB";
+      }
+    }
+    return null;
+  }
+
+  function renderPay() {
+    var html = "";
+    for (var i = 0; i < PAYS.length; i++) {
+      var p = PAYS[i];
+      html += '<tr class="' + (lastHit === p.k ? "hit" : "") + '"><td class="name">' + p.name + "</td>";
+      for (var b = 1; b <= 5; b++) {
+        html += '<td class="amt' + (b === bet ? " on" : "") + '">' + payout(p, b) + "</td>";
+      }
+      html += "</tr>";
+    }
+    payEl.innerHTML = html;
+  }
+
+  function renderHand() {
+    var html = "";
+    for (var i = 0; i < 5; i++) {
+      var c = hand[i];
+      var slotCls = "slot" + (held[i] ? " on" : "");
+      var inner;
+      if (!c) {
+        inner = '<div class="card down"></div>';
+      } else {
+        var red = c.s === 1 || c.s === 2;
+        inner = '<div class="card' + (red ? " red" : "") + '">' +
+          '<span class="ci">' + RANK[c.r] + "<br>" + SUIT[c.s] + "</span>" +
+          '<span class="cm">' + SUIT[c.s] + "</span></div>";
+      }
+      html += '<div class="' + slotCls + '" data-i="' + i + '"><div class="held">' +
+        (held[i] ? "HELD" : "") + "</div>" + inner + "</div>";
+    }
+    handEl.innerHTML = html;
+  }
+
+  function render() {
+    renderPay();
+    renderHand();
+    creditsEl.textContent = credits;
+    betEl.textContent = bet;
+    winEl.textContent = win;
+    dealBtn.textContent = phase === "bet" ? "DEAL" : "DRAW";
+    betOneBtn.disabled = phase !== "bet";
+    maxBetBtn.disabled = phase !== "bet";
+    dealBtn.disabled = phase === "bet" && credits < bet;
+  }
+
+  function setMsg(text, isWin) {
+    msgEl.textContent = text;
+    msgEl.className = isWin ? "msg win" : "msg";
+  }
+
+  function deal() {
+    if (credits < bet) {
+      setMsg("NOT ENOUGH CREDITS", false);
+      return;
+    }
+    credits -= bet;
+    win = 0;
+    lastHit = null;
+    held = [false, false, false, false, false];
+    shuffle();
+    hand = deck.splice(0, 5);
+    phase = "draw";
+    setMsg("HOLD, THEN DRAW", false);
+    render();
+  }
+
+  function draw() {
+    for (var i = 0; i < 5; i++) {
+      if (!held[i]) hand[i] = deck.pop();
+    }
+    phase = "bet";
+
+    var key = evaluate(hand);
+    lastHit = key;
+    if (key) {
+      var p = PAYS.filter(function (x) { return x.k === key; })[0];
+      win = payout(p, bet);
+      credits += win;
+      setMsg(p.name + " — WIN " + win, true);
+      held = [true, true, true, true, true];
+    } else {
+      win = 0;
+      setMsg(credits < bet ? "OUT OF CREDITS — PRESS BET ONE" : "NO WIN — DEAL AGAIN", false);
+      held = [false, false, false, false, false];
+    }
+    render();
+  }
+
+  function press() {
+    if (phase === "bet") deal();
+    else draw();
+  }
+
+  function toggleHold(i) {
+    if (phase !== "draw") return;
+    held[i] = !held[i];
+    render();
+  }
+
+  handEl.addEventListener("click", function (e) {
+    var slot = e.target.closest(".slot");
+    if (slot) toggleHold(+slot.dataset.i);
+  });
+
+  betOneBtn.addEventListener("click", function () {
+    if (phase !== "bet") return;
+    bet = bet % 5 + 1;
+    render();
+  });
+
+  maxBetBtn.addEventListener("click", function () {
+    if (phase !== "bet") return;
+    bet = 5;
+    render();
+    deal();
+  });
+
+  dealBtn.addEventListener("click", press);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key >= "1" && e.key <= "5") { toggleHold(+e.key - 1); return; }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); press(); }
+    if (e.key === "b" || e.key === "B") betOneBtn.click();
+    if (e.key === "m" || e.key === "M") maxBetBtn.click();
+  });
+
+  document.addEventListener("mousedown", function () { window.focus(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

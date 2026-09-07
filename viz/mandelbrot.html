@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mandelbrot</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  body { font-family: "Pixelated MS Sans Serif", "MS Sans Serif", Tahoma, sans-serif; }
+  canvas { display: block; cursor: crosshair; }
+  .bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 6px;
+    background: rgba(0,0,0,0.82);
+    border-top: 1px solid #333;
+    font-size: 11px;
+    color: #8ab4ff;
+  }
+  .bar button {
+    font: inherit;
+    padding: 2px 8px;
+    background: #c0c0c0;
+    color: #000;
+    border: 2px outset #dfdfdf;
+    cursor: pointer;
+  }
+  .bar button:active { border-style: inset; }
+  .bar .info { margin-left: auto; font-family: "Courier New", monospace; color: #39ff14; }
+  .busy { color: #fff200; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="bar">
+  <button id="reset">Reset</button>
+  <button id="out">Zoom out</button>
+  <span>click to zoom in &middot; shift-click to zoom out</span>
+  <span class="info">zoom <b id="zoom">1x</b> &middot; iter <b id="iter">120</b> <b id="busy" class="busy"></b></span>
+</div>
+<script>
+(function () {
+  var cv = document.getElementById("cv");
+  var cx = cv.getContext("2d");
+  var zoomEl = document.getElementById("zoom");
+  var iterEl = document.getElementById("iter");
+  var busyEl = document.getElementById("busy");
+
+  var HOME = { cx: -0.6, cy: 0, scale: 3.2 };   // scale = width of the view in complex units
+  var view = { cx: HOME.cx, cy: HOME.cy, scale: HOME.scale };
+  var W, H, img, data, maxIter, rowY, rendering = false, token = 0;
+
+  // Precomputed palette — a smooth cycle through blue, orange and white.
+  var PAL = [];
+  (function buildPalette() {
+    for (var i = 0; i < 2048; i++) {
+      var t = i / 2048;
+      var r = Math.round(9 * (1 - t) * t * t * t * 255);
+      var g = Math.round(15 * (1 - t) * (1 - t) * t * t * 255);
+      var b = Math.round(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255);
+      PAL.push([Math.min(255, r), Math.min(255, g), Math.min(255, b)]);
+    }
+  })();
+
+  function resize() {
+    W = cv.width = window.innerWidth || 400;
+    H = cv.height = Math.max(80, (window.innerHeight || 300) - 28);
+    img = cx.createImageData(W, H);
+    data = img.data;
+    render();
+  }
+
+  function iterationsFor(scale) {
+    // more detail is needed the further in you go
+    return Math.min(2000, Math.round(120 + Math.log2(HOME.scale / scale) * 55));
+  }
+
+  function render() {
+    maxIter = iterationsFor(view.scale);
+    iterEl.textContent = maxIter;
+    zoomEl.textContent = (HOME.scale / view.scale).toFixed(HOME.scale / view.scale < 100 ? 1 : 0) + "x";
+    rowY = 0;
+    token++;
+    rendering = true;
+    busyEl.textContent = "rendering…";
+    requestAnimationFrame(chunk.bind(null, token));
+  }
+
+  // Render in bands so the page never locks up on a deep zoom.
+  function chunk(myToken) {
+    if (myToken !== token) return;
+
+    var aspect = H / W;
+    var xMin = view.cx - view.scale / 2;
+    var yMin = view.cy - (view.scale * aspect) / 2;
+    var dx = view.scale / W;
+    var dy = (view.scale * aspect) / H;
+
+    var budget = 24;                      // rows per frame
+    var endY = Math.min(H, rowY + budget);
+
+    for (var py = rowY; py < endY; py++) {
+      var y0 = yMin + py * dy;
+      for (var px = 0; px < W; px++) {
+        var x0 = xMin + px * dx;
+
+        // cardioid / period-2 bulb check skips the expensive interior
+        var q = (x0 - 0.25) * (x0 - 0.25) + y0 * y0;
+        var inside = q * (q + (x0 - 0.25)) <= 0.25 * y0 * y0 ||
+                     (x0 + 1) * (x0 + 1) + y0 * y0 <= 0.0625;
+
+        var n = 0, x = 0, y = 0, x2 = 0, y2 = 0;
+        if (!inside) {
+          while (x2 + y2 <= 4 && n < maxIter) {
+            y = 2 * x * y + y0;
+            x = x2 - y2 + x0;
+            x2 = x * x;
+            y2 = y * y;
+            n++;
+          }
+        } else {
+          n = maxIter;
+        }
+
+        var o = (py * W + px) * 4;
+        if (n >= maxIter) {
+          data[o] = 0; data[o + 1] = 0; data[o + 2] = 0;
+        } else {
+          // smooth (fractional) escape count kills the colour banding
+          var mu = n + 1 - Math.log(Math.log(Math.sqrt(x2 + y2)) / Math.LN2) / Math.LN2;
+          var t = Math.max(0, mu) / maxIter;
+          var c = PAL[Math.min(PAL.length - 1, Math.floor(Math.pow(t, 0.45) * (PAL.length - 1)))];
+          data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2];
+        }
+        data[o + 3] = 255;
+      }
+    }
+
+    cx.putImageData(img, 0, 0);
+    rowY = endY;
+
+    if (rowY < H) requestAnimationFrame(chunk.bind(null, myToken));
+    else { rendering = false; busyEl.textContent = ""; }
+  }
+
+  // Complex coordinates under a screen position.
+  function complexAt(clientX, clientY) {
+    var r = cv.getBoundingClientRect();
+    var aspect = H / W;
+    var px = (clientX - r.left) / r.width;
+    var py = (clientY - r.top) / r.height;
+    return {
+      x: view.cx + (px - 0.5) * view.scale,
+      y: view.cy + (py - 0.5) * view.scale * aspect,
+      px: px,
+      py: py
+    };
+  }
+
+  // Click recentres on the point and zooms.
+  function zoomTo(clientX, clientY, factor) {
+    var t = complexAt(clientX, clientY);
+    view.cx = t.x;
+    view.cy = t.y;
+    view.scale = Math.min(HOME.scale, view.scale * factor);
+    render();
+  }
+
+  // The wheel keeps whatever is under the cursor pinned in place.
+  function zoomAtCursor(clientX, clientY, factor) {
+    var t = complexAt(clientX, clientY);
+    var aspect = H / W;
+    view.scale = Math.min(HOME.scale, view.scale * factor);
+    view.cx = t.x + (0.5 - t.px) * view.scale;
+    view.cy = t.y + (0.5 - t.py) * view.scale * aspect;
+    render();
+  }
+
+  cv.addEventListener("click", function (e) {
+    window.focus();
+    zoomTo(e.clientX, e.clientY, e.shiftKey ? 2.2 : 0.45);
+  });
+
+  cv.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    zoomAtCursor(e.clientX, e.clientY, e.deltaY > 0 ? 1.25 : 0.8);
+  }, { passive: false });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    view = { cx: HOME.cx, cy: HOME.cy, scale: HOME.scale };
+    render();
+  });
+  document.getElementById("out").addEventListener("click", function () {
+    view.scale = Math.min(HOME.scale, view.scale * 2.2);
+    render();
+  });
+
+  window.addEventListener("resize", resize);
+  resize();
+})();
+</script>
+</body>
+</html>
