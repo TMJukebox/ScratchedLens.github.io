@@ -96,16 +96,34 @@ function setupWindow(win) {
   bringToFront(win);
   win.addEventListener("pointerdown", () => bringToFront(win), true);
 
-  // ---- drag via the title bar ----
+  // ---- maximize state (shared with the drag handler) ----
+  let restore = null;
+  const captureRestore = () => {
+    restore = {
+      left: win.style.left,
+      top: win.style.top,
+      width: win.style.width,
+      height: win.style.height,
+    };
+  };
+  const unmaximize = () => {
+    win.classList.remove("is-maximized");
+    if (restore) Object.assign(win.style, restore);
+  };
+
+  // ---- drag via the title bar (pulling down also un-maximizes) ----
   let drag = null;
   titleBar.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || (controls && controls.contains(e.target))) return;
-    if (win.classList.contains("is-maximized")) return;
+    const r = win.getBoundingClientRect();
     drag = {
       x: e.clientX,
       y: e.clientY,
-      left: parseFloat(win.style.left),
-      top: parseFloat(win.style.top),
+      left: parseFloat(win.style.left) || 0,
+      top: parseFloat(win.style.top) || 0,
+      grabFracX: r.width ? (e.clientX - r.left) / r.width : 0.5,
+      grabOffsetY: e.clientY - r.top,
+      maximized: win.classList.contains("is-maximized"),
     };
     titleBar.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -113,6 +131,25 @@ function setupWindow(win) {
   titleBar.addEventListener("pointermove", (e) => {
     if (!drag) return;
     const edge = 40; // keep at least this much of the bar on-screen
+
+    // Tear a maximized window loose once the pointer has moved a little, and
+    // drop it under the cursor at its restored size so the drag continues.
+    if (drag.maximized) {
+      if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 8) return;
+      drag.maximized = false;
+      unmaximize();
+      const nx = clamp(
+        e.clientX - drag.grabFracX * win.offsetWidth,
+        edge - win.offsetWidth,
+        vpW() - edge
+      );
+      const ny = clamp(e.clientY - drag.grabOffsetY, 0, vpH() - TASKBAR_H - edge);
+      win.style.left = nx + "px";
+      win.style.top = ny + "px";
+      Object.assign(drag, { left: nx, top: ny, x: e.clientX, y: e.clientY });
+      return;
+    }
+
     let nx = drag.left + (e.clientX - drag.x);
     let ny = drag.top + (e.clientY - drag.y);
     nx = Math.min(Math.max(nx, edge - win.offsetWidth), vpW() - edge);
@@ -161,18 +198,11 @@ function setupWindow(win) {
   grip.addEventListener("pointercancel", endResize);
 
   // ---- maximize / restore ----
-  let restore = null;
   function toggleMax() {
     if (win.classList.contains("is-maximized")) {
-      win.classList.remove("is-maximized");
-      if (restore) Object.assign(win.style, restore);
+      unmaximize();
     } else {
-      restore = {
-        left: win.style.left,
-        top: win.style.top,
-        width: win.style.width,
-        height: win.style.height,
-      };
+      captureRestore();
       win.classList.add("is-maximized");
     }
   }
