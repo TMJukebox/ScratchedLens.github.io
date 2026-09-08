@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aden — desktop (one page)</title>
+<meta name="description" content="Single-page desktop version of Aden's portfolio: every section is a window.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
+<link rel="stylesheet" href="css/style.css?v=3">
+<style>
+  /* one-page-only tweaks — the taskbar now holds many live window buttons */
+  .taskbar-links { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
+  .taskbar-links .btn-task {
+    font: inherit;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    min-width: 34px;
+    max-width: 190px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .taskbar-links .btn-task.active { border-style: inset; }
+  #start-menu li a { display: block; padding: 4px 6px; text-decoration: none; color: inherit; }
+  #start-menu li a:hover { background: var(--win-navy); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="desktop">
+  <div class="desktop-icons">
+    <a class="desktop-icon icon-photo" href="photo-video.html" data-open="photo">
+      <img class="icon-glyph" src="img/camera95.jpg" alt="" width="48" height="48">
+      <span class="label">Photo &amp;<br>Video</span>
+    </a>
+    <a class="desktop-icon icon-web" href="web-design.html" data-open="web">
+      <img class="icon-glyph" src="img/computer95.png" alt="" width="48" height="48">
+      <span class="label">Website<br>Work</span>
+    </a>
+    <a class="desktop-icon icon-about" href="about.html" data-open="about">
+      <img class="icon-glyph" src="img/about95.png" alt="" width="48" height="48">
+      <span class="label">About<br>Me</span>
+    </a>
+    <a class="desktop-icon icon-contact" href="contact.html" data-open="contact">
+      <img class="icon-glyph" src="img/mail95.png" alt="" width="48" height="48">
+      <span class="label">Get In<br>Touch</span>
+    </a>
+    <a class="desktop-icon icon-recycle" href="recycle-bin.html" data-open="bin" title="Recycle Bin">
+      <img class="icon-glyph" src="img/recycle95.png" alt="" width="48" height="48">
+      <span class="label">Recycle<br>Bin</span>
+    </a>
+  </div>
+</div>
+
+<div class="taskbar">
+  <button id="start-button" class="start-button">
+    <span style="font-size:14px;">🪟</span> Start
+  </button>
+  <div class="taskbar-sep"></div>
+  <div class="taskbar-links" id="taskbar-links"></div>
+  <div id="tray-clock" class="tray-clock">--:-- --</div>
+</div>
+
+<div id="start-menu" class="window" style="display:none; position:fixed; bottom:44px; left:4px; width:220px; z-index:200;">
+  <div class="window-body" style="padding:6px;">
+    <ul style="list-style:none; margin:0; padding:0;">
+      <li><a href="index.html" data-open="welcome">🏠 Home</a></li>
+      <li><a href="photo-video.html" data-open="photo">📷 Photo &amp; Video</a></li>
+      <li><a href="web-design.html" data-open="web">🖥️ Website Work</a></li>
+      <li><a href="about.html" data-open="about">📼 About Me</a></li>
+      <li><a href="contact.html" data-open="contact">✉️ Contact</a></li>
+      <li><a href="recycle-bin.html" data-open="bin">🗑️ Recycle Bin</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================= window content ================= -->
+
+<template id="tpl-welcome">
+  <div class="marquee-bar"><span>*** now booking fall shows &amp; house venue photo nights *** portfolio v1.0 *** double-click an icon, get in touch ***</span></div>
+  <h1>hi, i'm Aden.</h1>
+  <p>
+    i build websites for folks or for businesses
+    and
+    i shoot photo &amp; video for queer-friendly punk spaces: house shows, DIY events, and really anything in town lol
+  </p>
+  <p>
+    <span class="sticker pink">no gatekeeping</span>
+    <span class="sticker blue">flat rates for DIY orgs</span>
+    <span class="sticker green">community first</span>
+  </p>
+  <hr class="tape">
+  <p>double-click a folder to look around, or find me on the taskbar.</p>
+</template>
+
+<template id="tpl-photo">
+  <h1>photo &amp; video</h1>
+  <p>
+    live show photography, band promo, house-venue documentation,
+    zine/flyer imagery. shot for and with queer &amp; punk scenes —
+    i know how to move in a pit, i know how to keep a space feeling
+    safe while I'm shooting it.
+  </p>
+  <p>
+    <span class="sticker pink">live shows</span>
+    <span class="sticker blue">band promo</span>
+    <span class="sticker green">event recap video</span>
+  </p>
+  <hr class="tape">
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <div class="thumb">[ photo 01 ]</div>
+      <div class="cap">Basement show, four-band bill<span class="venue">house venue — city, 2026</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="thumb">[ photo 02 ]</div>
+      <div class="cap">Band promo shoot<span class="venue">outdoor, golden hour</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="thumb">[ photo 03 ]</div>
+      <div class="cap">Crowd shot, benefit show<span class="venue">all-ages, mutual aid fundraiser</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="thumb">[ video 01 ▶ ]</div>
+      <div class="cap">Recap reel, weekend fest<span class="venue">DIY space, 3-day lineup</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="thumb">[ photo 04 ]</div>
+      <div class="cap">Zine release show<span class="venue">record shop back room</span></div>
+    </div>
+    <div class="gallery-item">
+      <div class="thumb">[ video 02 ▶ ]</div>
+      <div class="cap">Single band feature short<span class="venue">practice space session</span></div>
+    </div>
+  </div>
+  <hr class="tape">
+  <p style="font-size:12px;">
+    booking a shoot or want photos from a show you played?
+    <a href="contact.html" data-open="contact">get in touch →</a>
+  </p>
+</template>
+
+<template id="tpl-web">
+  <h1>website work</h1>
+  <p>
+    I build sites for bands, venues, and small shops that need
+    something fast, cheap to run, and actually theirs — no
+    page-builder lock-in. Static, hand-coded, hosted for free
+    where possible.
+  </p>
+  <hr class="tape">
+  <div class="case-study">
+    <div class="shot">[ screenshot: project 01 ]</div>
+    <h2>Project Name — one-line description</h2>
+    <p>
+      Brief: what the client needed and why. Approach: what you
+      built and how. Result: what changed for them (booking more
+      shows, easier merch updates, etc).
+    </p>
+    <div class="tech-tags"><span>HTML/CSS</span><span>GitHub Pages</span><span>Custom domain</span></div>
+    <p style="margin-top:8px;"><a href="#" class="btn-live">🔗 View live site</a></p>
+  </div>
+  <div class="case-study">
+    <div class="shot">[ screenshot: project 02 ]</div>
+    <h2>Project Name — one-line description</h2>
+    <p>Brief / Approach / Result — same structure, keep it short.</p>
+    <div class="tech-tags"><span>Static site</span><span>Mobile-first</span></div>
+    <p style="margin-top:8px;"><a href="#" class="btn-live">🔗 View live site</a></p>
+  </div>
+  <div class="case-study">
+    <div class="shot">[ screenshot: project 03 ]</div>
+    <h2>Project Name — one-line description</h2>
+    <p>Brief / Approach / Result.</p>
+    <div class="tech-tags"><span>E-commerce basics</span><span>Booking form</span></div>
+    <p style="margin-top:8px;"><a href="#" class="btn-live">🔗 View live site</a></p>
+  </div>
+  <hr class="tape">
+  <p style="font-size:12px;">
+    need a site for your band, venue, or shop?
+    <a href="contact.html" data-open="contact">let's talk →</a>
+  </p>
+</template>
+
+<template id="tpl-about">
+  <h1>about me</h1>
+  <p>
+    Hello! my name is Aden and I am a Graduate from the University of Texas at San Antonio with a degree in computer science.
+    I build websites for commercial, non-profit, and personal projects. but also i love to play video games, heading to the movies (shoutout araiana for always being down to see something), and seeing live music.
+  </p>
+  <p>
+    I care about community, showcasing local talent and unheard voices.
+    Quotes for commercial and non-profit work are available upon request. if you want to get in touch, please use the contact form on this site or email me directly at <a href="mailto:adenmrojas@gmail.com">adenmrojas@gmail.com</a>.
+  </p>
+  <hr class="tape">
+  <h2>what i do</h2>
+  <ul>
+    <li>static and or dynamic websites with different levels of interactivity</li>
+    <li>live show &amp; event photography</li>
+    <li>band promo shoots</li>
+    <li>short recap / highlight video</li>
+  </ul>
+  <hr class="tape">
+  <p>
+    <span class="sticker pink">est. [2021]</span>
+    <span class="sticker blue">[San Antonio,Tx]</span>
+  </p>
+</template>
+
+<template id="tpl-contact">
+  <h1>get in touch</h1>
+  <p>booking a shoot, need a site built, or just want to say hi:</p>
+  <div class="field-row-stacked" style="margin-bottom:10px;">
+    <label for="spa-email">email</label>
+    <input id="spa-email" type="text" readonly value="adenmrojas@gmail.com">
+  </div>
+  <p>
+    <span class="sticker pink">Instagram @yourhandle</span>
+    <span class="sticker blue">Bandcamp / portfolio link</span>
+  </p>
+  <hr class="tape">
+  <form action="mailto:adenmrojas@gmail.com" method="post" enctype="text/plain">
+    <div class="field-row-stacked">
+      <label for="spa-name">name</label>
+      <input id="spa-name" name="name" type="text">
+    </div>
+    <div class="field-row-stacked">
+      <label for="spa-reason">what do you need?</label>
+      <select id="spa-reason" name="reason">
+        <option>Photo / video booking</option>
+        <option>Website project</option>
+        <option>Just saying hi</option>
+      </select>
+    </div>
+    <div class="field-row-stacked">
+      <label for="spa-message">message</label>
+      <textarea id="spa-message" name="message" rows="5"></textarea>
+    </div>
+    <button type="submit">send message</button>
+  </form>
+</template>
+
+<template id="tpl-bin">
+  <p class="bin-status">Recycle Bin &mdash; 13 items. Nothing in here was ever really deleted. Double-click anything.</p>
+  <div class="bin-panel">
+    <h2 class="bin-head">Games</h2>
+    <div class="bin-grid">
+      <a class="desktop-icon bin-icon" href="games/snake.html" data-title="SNAKE.EXE" data-tb="tb-green" data-w="424" data-h="452">
+        <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32"><span class="label">Snake</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/tetris.html" data-title="TETRIS.EXE" data-tb="tb-purple" data-w="344" data-h="472">
+        <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32"><span class="label">Tetris</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/minesweeper.html" data-title="MINESWEEPER.EXE" data-tb="tb-navy" data-w="348" data-h="440">
+        <img class="icon-glyph" src="img/bin-minesweeper.png?v=3" alt="" width="32" height="32"><span class="label">Minesweeper</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/solitaire.html" data-title="SOLITAIRE.EXE" data-tb="tb-navy" data-w="500" data-h="506">
+        <img class="icon-glyph" src="img/bin-solitaire.png?v=3" alt="" width="32" height="32"><span class="label">Solitaire</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/poker.html" data-title="VIDPOKER.EXE" data-tb="tb-purple" data-w="484" data-h="486">
+        <img class="icon-glyph" src="img/bin-cards.png?v=3" alt="" width="32" height="32"><span class="label">Video Poker</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/pong.html" data-title="PONG.EXE" data-tb="tb-blue" data-w="504" data-h="372">
+        <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32"><span class="label">Pong</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/breakout.html" data-title="BREAKOUT.EXE" data-tb="tb-pink" data-w="424" data-h="492">
+        <img class="icon-glyph" src="img/bin-joystick.png?v=3" alt="" width="32" height="32"><span class="label">Breakout</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="games/invaders.html" data-title="INVADERS.EXE" data-tb="tb-green" data-w="504" data-h="472">
+        <img class="icon-glyph" src="img/bin-spider.png?v=3" alt="" width="32" height="32"><span class="label">Invaders</span>
+      </a>
+    </div>
+    <h2 class="bin-head">Screensavers &amp; toys</h2>
+    <div class="bin-grid">
+      <a class="desktop-icon bin-icon" href="viz/starfield.html" data-title="STARS.SCR" data-tb="tb-blue" data-w="520" data-h="400">
+        <img class="icon-glyph" src="img/bin-monitor-night.png?v=3" alt="" width="32" height="32"><span class="label">Starfield</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="viz/mystify.html" data-title="MYSTIFY.SCR" data-tb="tb-pink" data-w="520" data-h="400">
+        <img class="icon-glyph" src="img/bin-monitor-tv.png?v=3" alt="" width="32" height="32"><span class="label">Mystify</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="viz/matrix.html" data-title="RAIN.SCR" data-tb="tb-green" data-w="520" data-h="400">
+        <img class="icon-glyph" src="img/bin-console.png?v=3" alt="" width="32" height="32"><span class="label">Digital Rain</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="viz/life.html" data-title="LIFE.EXE" data-tb="tb-green" data-w="560" data-h="430">
+        <img class="icon-glyph" src="img/bin-tree.png?v=3" alt="" width="32" height="32"><span class="label">Life</span>
+      </a>
+      <a class="desktop-icon bin-icon" href="viz/mandelbrot.html" data-title="MANDEL.EXE" data-tb="tb-purple" data-w="560" data-h="440">
+        <img class="icon-glyph" src="img/bin-magnify.png?v=3" alt="" width="32" height="32"><span class="label">Mandelbrot</span>
+      </a>
+    </div>
+  </div>
+</template>
+
+<script>
+/* ---------------------------------------------------------------------------
+   One dynamic page. The whole site is a desktop: each section is a window
+   opened from an icon, the start menu, or an in-page link. Nothing navigates.
+   The multi-page files (index.html, photo-video.html, games/*, ...) still
+   exist and are used as no-JS fallbacks via the icons' href.
+--------------------------------------------------------------------------- */
+
+const TASKBAR_H = 40;
+const ON_HOME = false;
+const vpW = () => window.innerWidth || document.documentElement.clientWidth || 1024;
+const vpH = () => window.innerHeight || document.documentElement.clientHeight || 768;
+
+let zTop = 50;
+function bringToFront(win) {
+  zTop = Math.min(zTop + 1, 99);
+  win.style.zIndex = zTop;
+}
+
+/* ---- draggable / resizable OS-style window (shared with js/script.js) ---- */
+function setupWindow(win) {
+  const titleBar = win.querySelector(".title-bar");
+  if (!titleBar) return;
+  const controls = win.querySelector(".title-bar-controls");
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+  const vw = vpW();
+  const vh = vpH();
+  const iconCol = vw > 600 ? 132 : 8;
+  const maxH = vh - TASKBAR_H - 24;
+
+  win.classList.add("win-managed");
+  win.style.maxWidth = "none";
+  win.style.maxHeight = "none";
+
+  const presetW = parseFloat(win.dataset.width);
+  const presetH = parseFloat(win.dataset.height);
+
+  const w = clamp(presetW || 600, 280, Math.min(vw - iconCol - 24, 900));
+  win.style.width = w + "px";
+  win.style.height = "auto";
+  void win.offsetHeight;
+  const natural =
+    presetH ||
+    titleBar.offsetHeight + (win.querySelector(".window-body").scrollHeight || 0) + 12;
+  const h = clamp(natural, 150, maxH);
+
+  const avail = vw - iconCol - 24 - w;
+  const left = iconCol + (avail > 0 ? avail / 2 : 8);
+  const top = clamp((vh - TASKBAR_H - h) / 3, 16, Math.max(16, vh - TASKBAR_H - h - 8));
+
+  Object.assign(win.style, { left: left + "px", top: top + "px", height: h + "px" });
+  bringToFront(win);
+  win.addEventListener("pointerdown", () => bringToFront(win), true);
+
+  let restore = null;
+  const captureRestore = () => {
+    restore = { left: win.style.left, top: win.style.top, width: win.style.width, height: win.style.height };
+  };
+  const unmaximize = () => {
+    win.classList.remove("is-maximized");
+    if (restore) Object.assign(win.style, restore);
+  };
+
+  let drag = null;
+  titleBar.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || (controls && controls.contains(e.target))) return;
+    const r = win.getBoundingClientRect();
+    drag = {
+      x: e.clientX, y: e.clientY,
+      left: parseFloat(win.style.left) || 0,
+      top: parseFloat(win.style.top) || 0,
+      grabFracX: r.width ? (e.clientX - r.left) / r.width : 0.5,
+      grabOffsetY: e.clientY - r.top,
+      maximized: win.classList.contains("is-maximized"),
+    };
+    titleBar.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  titleBar.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const edge = 40;
+    if (drag.maximized) {
+      if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 8) return;
+      drag.maximized = false;
+      unmaximize();
+      const nx = clamp(e.clientX - drag.grabFracX * win.offsetWidth, edge - win.offsetWidth, vpW() - edge);
+      const ny = clamp(e.clientY - drag.grabOffsetY, 0, vpH() - TASKBAR_H - edge);
+      win.style.left = nx + "px";
+      win.style.top = ny + "px";
+      Object.assign(drag, { left: nx, top: ny, x: e.clientX, y: e.clientY });
+      return;
+    }
+    let nx = drag.left + (e.clientX - drag.x);
+    let ny = drag.top + (e.clientY - drag.y);
+    nx = Math.min(Math.max(nx, edge - win.offsetWidth), vpW() - edge);
+    ny = Math.min(Math.max(ny, 0), vpH() - TASKBAR_H - edge);
+    win.style.left = nx + "px";
+    win.style.top = ny + "px";
+  });
+  const endDrag = (e) => {
+    drag = null;
+    if (e && e.pointerId != null) {
+      try { titleBar.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+  };
+  titleBar.addEventListener("pointerup", endDrag);
+  titleBar.addEventListener("pointercancel", endDrag);
+
+  const grip = document.createElement("div");
+  grip.className = "win-resize";
+  grip.setAttribute("aria-hidden", "true");
+  win.appendChild(grip);
+  let rs = null;
+  grip.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || win.classList.contains("is-maximized")) return;
+    rs = { x: e.clientX, y: e.clientY, w: win.offsetWidth, h: win.offsetHeight };
+    grip.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  grip.addEventListener("pointermove", (e) => {
+    if (!rs) return;
+    const left = parseFloat(win.style.left);
+    const top = parseFloat(win.style.top);
+    const nw = clamp(rs.w + (e.clientX - rs.x), 280, vpW() - left - 8);
+    const nh = clamp(rs.h + (e.clientY - rs.y), 150, vpH() - TASKBAR_H - top - 8);
+    win.style.width = nw + "px";
+    win.style.height = nh + "px";
+  });
+  const endResize = (e) => {
+    rs = null;
+    if (e && e.pointerId != null) {
+      try { grip.releasePointerCapture(e.pointerId); } catch (_) {}
+    }
+  };
+  grip.addEventListener("pointerup", endResize);
+  grip.addEventListener("pointercancel", endResize);
+
+  function toggleMax() {
+    if (win.classList.contains("is-maximized")) unmaximize();
+    else { captureRestore(); win.classList.add("is-maximized"); }
+  }
+  const maxBtn = controls && controls.querySelector('button[aria-label="Maximize"]');
+  if (maxBtn) maxBtn.addEventListener("click", toggleMax);
+  titleBar.addEventListener("dblclick", (e) => {
+    if (controls && controls.contains(e.target)) return;
+    toggleMax();
+  });
+
+  const minBtn = controls && controls.querySelector('button[aria-label="Minimize"]');
+  if (minBtn) minBtn.addEventListener("click", () => win.classList.add("is-minimized"));
+
+  const closeBtn = controls && controls.querySelector('button[aria-label="Close"]');
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      win.hidden = true;
+      win.classList.remove("is-minimized", "is-maximized");
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    if (win.classList.contains("is-maximized")) return;
+    const cx = Math.min(parseFloat(win.style.left), vpW() - 60);
+    const cy = Math.min(parseFloat(win.style.top), vpH() - TASKBAR_H - 40);
+    win.style.left = Math.max(60 - win.offsetWidth, cx) + "px";
+    win.style.top = Math.max(0, cy) + "px";
+  });
+}
+
+/* ---- section registry ---- */
+const SECTIONS = {
+  welcome: { title: "WELCOME.TXT — Notepad",           tb: "tb-navy",   w: 560, h: 300, tab: "🏠 Home.exe" },
+  photo:   { title: "PHOTO_VIDEO — Paint",             tb: "tb-pink",   w: 620, h: 470, tab: "📷 Photo_Video.exe" },
+  web:     { title: "WEB_DESIGN — Internet Explorer",  tb: "tb-blue",   w: 620, h: 470, tab: "🖥️ Web_Design.exe" },
+  about:   { title: "ABOUT_ME — Properties",           tb: "tb-purple", w: 560, h: 430, tab: "📼 About_Me.exe" },
+  contact: { title: "CONTACT — Outlook Express",       tb: "tb-green",  w: 520, h: 470, tab: "✉️ Contact.exe" },
+  bin:     { title: "RECYCLE BIN",                     tb: "tb-navy",   w: 540, h: 440, tab: "🗑️ Recycle_Bin.exe" },
+};
+
+const open = {};                 // key -> { win, btn }
+const bar = document.getElementById("taskbar-links");
+let cascade = 0;
+
+function titleBarHTML(title, tb) {
+  return '<div class="title-bar ' + tb + '">' +
+    '<div class="title-bar-text"></div>' +
+    '<div class="title-bar-controls">' +
+      '<button aria-label="Minimize"></button>' +
+      '<button aria-label="Maximize"></button>' +
+      '<button aria-label="Close"></button>' +
+    "</div></div>";
+}
+
+function register(key, win, taskInner) {
+  document.body.appendChild(win);
+  setupWindow(win);
+
+  // cascade so a second window doesn't land exactly on the first
+  const off = (cascade++ % 6) * 26;
+  win.style.left = Math.max(8, Math.min((parseFloat(win.style.left) || 0) + off, vpW() - win.offsetWidth - 8)) + "px";
+  win.style.top  = Math.max(8, Math.min((parseFloat(win.style.top) || 0) + off, vpH() - TASKBAR_H - win.offsetHeight - 8)) + "px";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn-task active";
+  btn.innerHTML = taskInner;
+  btn.addEventListener("click", () => {
+    if (win.classList.contains("is-minimized")) {
+      win.classList.remove("is-minimized");
+      bringToFront(win);
+    } else {
+      win.classList.add("is-minimized");
+    }
+  });
+  bar.appendChild(btn);
+  open[key] = { win, btn };
+
+  new MutationObserver(() => {
+    if (win.hidden) {                       // closed
+      win.remove();
+      btn.remove();
+      delete open[key];
+      return;
+    }
+    btn.classList.toggle("active", !win.classList.contains("is-minimized"));
+  }).observe(win, { attributes: true, attributeFilter: ["hidden", "class"] });
+
+  bringToFront(win);
+}
+
+function reopen(rec) {
+  rec.win.hidden = false;
+  rec.win.classList.remove("is-minimized");
+  bringToFront(rec.win);
+}
+
+function openSection(key) {
+  const s = SECTIONS[key];
+  if (!s) return;
+  if (open[key]) { reopen(open[key]); return; }
+
+  const tpl = document.getElementById("tpl-" + key);
+  const win = document.createElement("div");
+  win.className = "window content-window app-window";
+  win.dataset.width = s.w;
+  win.dataset.height = s.h;
+  win.innerHTML = titleBarHTML(s.title, s.tb) + '<div class="window-body"></div>';
+  win.querySelector(".title-bar-text").textContent = s.title;
+  win.querySelector(".window-body").appendChild(tpl.content.cloneNode(true));
+  register(key, win, s.tab);
+}
+
+function openApp(icon) {
+  const key = icon.getAttribute("href");
+  if (open[key]) { reopen(open[key]); return; }
+
+  const title = icon.dataset.title || "APP";
+  const win = document.createElement("div");
+  win.className = "window app-window";
+  win.dataset.width = icon.dataset.w || 480;
+  win.dataset.height = icon.dataset.h || 400;
+  win.innerHTML = titleBarHTML(title, icon.dataset.tb || "tb-navy") +
+    '<div class="window-body app-body"><iframe class="app-frame" src="about:blank"></iframe></div>';
+  win.querySelector(".title-bar-text").textContent = title;
+
+  const glyph = icon.querySelector(".icon-glyph");
+  const label = icon.querySelector(".label");
+  const tabInner =
+    (glyph ? '<img src="' + glyph.src + '" alt="" width="16" height="16" style="image-rendering:pixelated;margin-right:4px;vertical-align:-3px">' : "") +
+    (label ? label.textContent : title);
+  register(key, win, tabInner);
+
+  const frame = win.querySelector(".app-frame");
+  frame.title = title;
+  frame.src = key;
+  setTimeout(() => { try { frame.contentWindow.focus(); } catch (e) {} }, 90);
+}
+
+/* ---- wiring ---- */
+document.addEventListener("click", (e) => {
+  const opener = e.target.closest("[data-open]");
+  if (opener) {
+    e.preventDefault();
+    openSection(opener.dataset.open);
+    const menu = document.getElementById("start-menu");
+    if (menu) menu.style.display = "none";
+    return;
+  }
+  const binIcon = e.target.closest(".bin-icon");
+  if (binIcon) {
+    e.preventDefault();
+    openApp(binIcon);
+  }
+});
+
+// start menu
+const startBtn = document.getElementById("start-button");
+const startMenu = document.getElementById("start-menu");
+if (startBtn && startMenu) {
+  startBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    startMenu.style.display = startMenu.style.display === "block" ? "none" : "block";
+  });
+  document.addEventListener("click", (e) => {
+    if (!startMenu.contains(e.target) && e.target !== startBtn) startMenu.style.display = "none";
+  });
+}
+
+// clock
+function updateClock() {
+  const el = document.getElementById("tray-clock");
+  if (!el) return;
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  el.textContent = `${h}:${m} ${ampm}`;
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+// open WELCOME once layout has settled
+if (document.readyState === "complete") setTimeout(() => openSection("welcome"), 60);
+else window.addEventListener("load", () => setTimeout(() => openSection("welcome"), 60), { once: true });
+</script>
+</body>
+</html>
