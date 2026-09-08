@@ -1,7 +1,7 @@
 /* ===========================================================================
    Desktop — the one-page ("dynamic") build of the site.
 
-   All behaviour lives here. app.html only supplies markup: the desktop icons,
+   All behaviour lives here. index.html only supplies markup: the desktop icons,
    the taskbar shell, and a <template> per section (each template carries its
    own window metadata in data-* attributes). Call Desktop.init() once.
 
