@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css">
 <link rel="stylesheet" href="css/style.css?v=3">
 <style>
-  /* one-page-only tweaks — the taskbar now holds many live window buttons */
+  /* one-page-only: the taskbar now holds many live window buttons */
   .taskbar-links { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
   .taskbar-links .btn-task {
     font: inherit;
@@ -77,9 +77,11 @@
   </div>
 </div>
 
-<!-- ================= window content ================= -->
+<!-- ===== window content: one <template> per section, metadata in data-* ===== -->
 
-<template id="tpl-welcome">
+<template id="tpl-welcome" data-default
+          data-title="WELCOME.TXT — Notepad" data-tb="tb-navy"
+          data-w="560" data-h="300" data-tab="🏠 Home.exe">
   <div class="marquee-bar"><span>*** now booking fall shows &amp; house venue photo nights *** portfolio v1.0 *** double-click an icon, get in touch ***</span></div>
   <h1>hi, i'm Aden.</h1>
   <p>
@@ -96,7 +98,9 @@
   <p>double-click a folder to look around, or find me on the taskbar.</p>
 </template>
 
-<template id="tpl-photo">
+<template id="tpl-photo"
+          data-title="PHOTO_VIDEO — Paint" data-tb="tb-pink"
+          data-w="620" data-h="470" data-tab="📷 Photo_Video.exe">
   <h1>photo &amp; video</h1>
   <p>
     live show photography, band promo, house-venue documentation,
@@ -143,7 +147,9 @@
   </p>
 </template>
 
-<template id="tpl-web">
+<template id="tpl-web"
+          data-title="WEB_DESIGN — Internet Explorer" data-tb="tb-blue"
+          data-w="620" data-h="470" data-tab="🖥️ Web_Design.exe">
   <h1>website work</h1>
   <p>
     I build sites for bands, venues, and small shops that need
@@ -184,7 +190,9 @@
   </p>
 </template>
 
-<template id="tpl-about">
+<template id="tpl-about"
+          data-title="ABOUT_ME — Properties" data-tb="tb-purple"
+          data-w="560" data-h="430" data-tab="📼 About_Me.exe">
   <h1>about me</h1>
   <p>
     Hello! my name is Aden and I am a Graduate from the University of Texas at San Antonio with a degree in computer science.
@@ -209,7 +217,9 @@
   </p>
 </template>
 
-<template id="tpl-contact">
+<template id="tpl-contact"
+          data-title="CONTACT — Outlook Express" data-tb="tb-green"
+          data-w="520" data-h="470" data-tab="✉️ Contact.exe">
   <h1>get in touch</h1>
   <p>booking a shoot, need a site built, or just want to say hi:</p>
   <div class="field-row-stacked" style="margin-bottom:10px;">
@@ -242,7 +252,9 @@
   </form>
 </template>
 
-<template id="tpl-bin">
+<template id="tpl-bin"
+          data-title="RECYCLE BIN" data-tb="tb-navy"
+          data-w="540" data-h="440" data-tab="🗑️ Recycle_Bin.exe">
   <p class="bin-status">Recycle Bin &mdash; 13 items. Nothing in here was ever really deleted. Double-click anything.</p>
   <div class="bin-panel">
     <h2 class="bin-head">Games</h2>
@@ -293,333 +305,8 @@
   </div>
 </template>
 
-<script>
-/* ---------------------------------------------------------------------------
-   One dynamic page. The whole site is a desktop: each section is a window
-   opened from an icon, the start menu, or an in-page link. Nothing navigates.
-   The multi-page files (index.html, photo-video.html, games/*, ...) still
-   exist and are used as no-JS fallbacks via the icons' href.
---------------------------------------------------------------------------- */
-
-const TASKBAR_H = 40;
-const ON_HOME = false;
-const vpW = () => window.innerWidth || document.documentElement.clientWidth || 1024;
-const vpH = () => window.innerHeight || document.documentElement.clientHeight || 768;
-
-let zTop = 50;
-function bringToFront(win) {
-  zTop = Math.min(zTop + 1, 99);
-  win.style.zIndex = zTop;
-}
-
-/* ---- draggable / resizable OS-style window (shared with js/script.js) ---- */
-function setupWindow(win) {
-  const titleBar = win.querySelector(".title-bar");
-  if (!titleBar) return;
-  const controls = win.querySelector(".title-bar-controls");
-
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
-  const vw = vpW();
-  const vh = vpH();
-  const iconCol = vw > 600 ? 132 : 8;
-  const maxH = vh - TASKBAR_H - 24;
-
-  win.classList.add("win-managed");
-  win.style.maxWidth = "none";
-  win.style.maxHeight = "none";
-
-  const presetW = parseFloat(win.dataset.width);
-  const presetH = parseFloat(win.dataset.height);
-
-  const w = clamp(presetW || 600, 280, Math.min(vw - iconCol - 24, 900));
-  win.style.width = w + "px";
-  win.style.height = "auto";
-  void win.offsetHeight;
-  const natural =
-    presetH ||
-    titleBar.offsetHeight + (win.querySelector(".window-body").scrollHeight || 0) + 12;
-  const h = clamp(natural, 150, maxH);
-
-  const avail = vw - iconCol - 24 - w;
-  const left = iconCol + (avail > 0 ? avail / 2 : 8);
-  const top = clamp((vh - TASKBAR_H - h) / 3, 16, Math.max(16, vh - TASKBAR_H - h - 8));
-
-  Object.assign(win.style, { left: left + "px", top: top + "px", height: h + "px" });
-  bringToFront(win);
-  win.addEventListener("pointerdown", () => bringToFront(win), true);
-
-  let restore = null;
-  const captureRestore = () => {
-    restore = { left: win.style.left, top: win.style.top, width: win.style.width, height: win.style.height };
-  };
-  const unmaximize = () => {
-    win.classList.remove("is-maximized");
-    if (restore) Object.assign(win.style, restore);
-  };
-
-  let drag = null;
-  titleBar.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || (controls && controls.contains(e.target))) return;
-    const r = win.getBoundingClientRect();
-    drag = {
-      x: e.clientX, y: e.clientY,
-      left: parseFloat(win.style.left) || 0,
-      top: parseFloat(win.style.top) || 0,
-      grabFracX: r.width ? (e.clientX - r.left) / r.width : 0.5,
-      grabOffsetY: e.clientY - r.top,
-      maximized: win.classList.contains("is-maximized"),
-    };
-    titleBar.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-  titleBar.addEventListener("pointermove", (e) => {
-    if (!drag) return;
-    const edge = 40;
-    if (drag.maximized) {
-      if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 8) return;
-      drag.maximized = false;
-      unmaximize();
-      const nx = clamp(e.clientX - drag.grabFracX * win.offsetWidth, edge - win.offsetWidth, vpW() - edge);
-      const ny = clamp(e.clientY - drag.grabOffsetY, 0, vpH() - TASKBAR_H - edge);
-      win.style.left = nx + "px";
-      win.style.top = ny + "px";
-      Object.assign(drag, { left: nx, top: ny, x: e.clientX, y: e.clientY });
-      return;
-    }
-    let nx = drag.left + (e.clientX - drag.x);
-    let ny = drag.top + (e.clientY - drag.y);
-    nx = Math.min(Math.max(nx, edge - win.offsetWidth), vpW() - edge);
-    ny = Math.min(Math.max(ny, 0), vpH() - TASKBAR_H - edge);
-    win.style.left = nx + "px";
-    win.style.top = ny + "px";
-  });
-  const endDrag = (e) => {
-    drag = null;
-    if (e && e.pointerId != null) {
-      try { titleBar.releasePointerCapture(e.pointerId); } catch (_) {}
-    }
-  };
-  titleBar.addEventListener("pointerup", endDrag);
-  titleBar.addEventListener("pointercancel", endDrag);
-
-  const grip = document.createElement("div");
-  grip.className = "win-resize";
-  grip.setAttribute("aria-hidden", "true");
-  win.appendChild(grip);
-  let rs = null;
-  grip.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || win.classList.contains("is-maximized")) return;
-    rs = { x: e.clientX, y: e.clientY, w: win.offsetWidth, h: win.offsetHeight };
-    grip.setPointerCapture(e.pointerId);
-    e.preventDefault();
-    e.stopPropagation();
-  });
-  grip.addEventListener("pointermove", (e) => {
-    if (!rs) return;
-    const left = parseFloat(win.style.left);
-    const top = parseFloat(win.style.top);
-    const nw = clamp(rs.w + (e.clientX - rs.x), 280, vpW() - left - 8);
-    const nh = clamp(rs.h + (e.clientY - rs.y), 150, vpH() - TASKBAR_H - top - 8);
-    win.style.width = nw + "px";
-    win.style.height = nh + "px";
-  });
-  const endResize = (e) => {
-    rs = null;
-    if (e && e.pointerId != null) {
-      try { grip.releasePointerCapture(e.pointerId); } catch (_) {}
-    }
-  };
-  grip.addEventListener("pointerup", endResize);
-  grip.addEventListener("pointercancel", endResize);
-
-  function toggleMax() {
-    if (win.classList.contains("is-maximized")) unmaximize();
-    else { captureRestore(); win.classList.add("is-maximized"); }
-  }
-  const maxBtn = controls && controls.querySelector('button[aria-label="Maximize"]');
-  if (maxBtn) maxBtn.addEventListener("click", toggleMax);
-  titleBar.addEventListener("dblclick", (e) => {
-    if (controls && controls.contains(e.target)) return;
-    toggleMax();
-  });
-
-  const minBtn = controls && controls.querySelector('button[aria-label="Minimize"]');
-  if (minBtn) minBtn.addEventListener("click", () => win.classList.add("is-minimized"));
-
-  const closeBtn = controls && controls.querySelector('button[aria-label="Close"]');
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      win.hidden = true;
-      win.classList.remove("is-minimized", "is-maximized");
-    });
-  }
-
-  window.addEventListener("resize", () => {
-    if (win.classList.contains("is-maximized")) return;
-    const cx = Math.min(parseFloat(win.style.left), vpW() - 60);
-    const cy = Math.min(parseFloat(win.style.top), vpH() - TASKBAR_H - 40);
-    win.style.left = Math.max(60 - win.offsetWidth, cx) + "px";
-    win.style.top = Math.max(0, cy) + "px";
-  });
-}
-
-/* ---- section registry ---- */
-const SECTIONS = {
-  welcome: { title: "WELCOME.TXT — Notepad",           tb: "tb-navy",   w: 560, h: 300, tab: "🏠 Home.exe" },
-  photo:   { title: "PHOTO_VIDEO — Paint",             tb: "tb-pink",   w: 620, h: 470, tab: "📷 Photo_Video.exe" },
-  web:     { title: "WEB_DESIGN — Internet Explorer",  tb: "tb-blue",   w: 620, h: 470, tab: "🖥️ Web_Design.exe" },
-  about:   { title: "ABOUT_ME — Properties",           tb: "tb-purple", w: 560, h: 430, tab: "📼 About_Me.exe" },
-  contact: { title: "CONTACT — Outlook Express",       tb: "tb-green",  w: 520, h: 470, tab: "✉️ Contact.exe" },
-  bin:     { title: "RECYCLE BIN",                     tb: "tb-navy",   w: 540, h: 440, tab: "🗑️ Recycle_Bin.exe" },
-};
-
-const open = {};                 // key -> { win, btn }
-const bar = document.getElementById("taskbar-links");
-let cascade = 0;
-
-function titleBarHTML(title, tb) {
-  return '<div class="title-bar ' + tb + '">' +
-    '<div class="title-bar-text"></div>' +
-    '<div class="title-bar-controls">' +
-      '<button aria-label="Minimize"></button>' +
-      '<button aria-label="Maximize"></button>' +
-      '<button aria-label="Close"></button>' +
-    "</div></div>";
-}
-
-function register(key, win, taskInner) {
-  document.body.appendChild(win);
-  setupWindow(win);
-
-  // cascade so a second window doesn't land exactly on the first
-  const off = (cascade++ % 6) * 26;
-  win.style.left = Math.max(8, Math.min((parseFloat(win.style.left) || 0) + off, vpW() - win.offsetWidth - 8)) + "px";
-  win.style.top  = Math.max(8, Math.min((parseFloat(win.style.top) || 0) + off, vpH() - TASKBAR_H - win.offsetHeight - 8)) + "px";
-
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "btn-task active";
-  btn.innerHTML = taskInner;
-  btn.addEventListener("click", () => {
-    if (win.classList.contains("is-minimized")) {
-      win.classList.remove("is-minimized");
-      bringToFront(win);
-    } else {
-      win.classList.add("is-minimized");
-    }
-  });
-  bar.appendChild(btn);
-  open[key] = { win, btn };
-
-  new MutationObserver(() => {
-    if (win.hidden) {                       // closed
-      win.remove();
-      btn.remove();
-      delete open[key];
-      return;
-    }
-    btn.classList.toggle("active", !win.classList.contains("is-minimized"));
-  }).observe(win, { attributes: true, attributeFilter: ["hidden", "class"] });
-
-  bringToFront(win);
-}
-
-function reopen(rec) {
-  rec.win.hidden = false;
-  rec.win.classList.remove("is-minimized");
-  bringToFront(rec.win);
-}
-
-function openSection(key) {
-  const s = SECTIONS[key];
-  if (!s) return;
-  if (open[key]) { reopen(open[key]); return; }
-
-  const tpl = document.getElementById("tpl-" + key);
-  const win = document.createElement("div");
-  win.className = "window content-window app-window";
-  win.dataset.width = s.w;
-  win.dataset.height = s.h;
-  win.innerHTML = titleBarHTML(s.title, s.tb) + '<div class="window-body"></div>';
-  win.querySelector(".title-bar-text").textContent = s.title;
-  win.querySelector(".window-body").appendChild(tpl.content.cloneNode(true));
-  register(key, win, s.tab);
-}
-
-function openApp(icon) {
-  const key = icon.getAttribute("href");
-  if (open[key]) { reopen(open[key]); return; }
-
-  const title = icon.dataset.title || "APP";
-  const win = document.createElement("div");
-  win.className = "window app-window";
-  win.dataset.width = icon.dataset.w || 480;
-  win.dataset.height = icon.dataset.h || 400;
-  win.innerHTML = titleBarHTML(title, icon.dataset.tb || "tb-navy") +
-    '<div class="window-body app-body"><iframe class="app-frame" src="about:blank"></iframe></div>';
-  win.querySelector(".title-bar-text").textContent = title;
-
-  const glyph = icon.querySelector(".icon-glyph");
-  const label = icon.querySelector(".label");
-  const tabInner =
-    (glyph ? '<img src="' + glyph.src + '" alt="" width="16" height="16" style="image-rendering:pixelated;margin-right:4px;vertical-align:-3px">' : "") +
-    (label ? label.textContent : title);
-  register(key, win, tabInner);
-
-  const frame = win.querySelector(".app-frame");
-  frame.title = title;
-  frame.src = key;
-  setTimeout(() => { try { frame.contentWindow.focus(); } catch (e) {} }, 90);
-}
-
-/* ---- wiring ---- */
-document.addEventListener("click", (e) => {
-  const opener = e.target.closest("[data-open]");
-  if (opener) {
-    e.preventDefault();
-    openSection(opener.dataset.open);
-    const menu = document.getElementById("start-menu");
-    if (menu) menu.style.display = "none";
-    return;
-  }
-  const binIcon = e.target.closest(".bin-icon");
-  if (binIcon) {
-    e.preventDefault();
-    openApp(binIcon);
-  }
-});
-
-// start menu
-const startBtn = document.getElementById("start-button");
-const startMenu = document.getElementById("start-menu");
-if (startBtn && startMenu) {
-  startBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    startMenu.style.display = startMenu.style.display === "block" ? "none" : "block";
-  });
-  document.addEventListener("click", (e) => {
-    if (!startMenu.contains(e.target) && e.target !== startBtn) startMenu.style.display = "none";
-  });
-}
-
-// clock
-function updateClock() {
-  const el = document.getElementById("tray-clock");
-  if (!el) return;
-  const now = new Date();
-  let h = now.getHours();
-  const m = now.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
-  el.textContent = `${h}:${m} ${ampm}`;
-}
-updateClock();
-setInterval(updateClock, 15000);
-
-// open WELCOME once layout has settled
-if (document.readyState === "complete") setTimeout(() => openSection("welcome"), 60);
-else window.addEventListener("load", () => setTimeout(() => openSection("welcome"), 60), { once: true });
-</script>
+<script src="js/script.js?v=3"></script>
+<script src="js/app.js?v=1"></script>
+<script>Desktop.init();</script>
 </body>
 </html>
